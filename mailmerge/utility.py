@@ -6,7 +6,7 @@ from tkinter import filedialog, Tk
 from itertools import product
 
 
-def create_folder_hierarchy():
+def create_folder_hierarchy(top_level_dir, sub_directories):
     # prevent second window pop up
     root = Tk()
     root.withdraw()
@@ -14,18 +14,15 @@ def create_folder_hierarchy():
     # receive 'root' directory path in which the folder hierarchy should be created,
     hierarchy_root = Path(filedialog.askdirectory())
 
-    # define base folder to prevent cluttering
-    top_level = "client_correspondence"
+    # construct absolute paths
+    paths = []
+    for path in path_creator(sub_directories):
+        paths.append(hierarchy_root / top_level / path)
 
-    # make directory paths: hierarchy_root / top_level / for advisor in advisors / ZU & AP
-    # each directory path, e.g.
-    # ["hierarchy_root/client_correspondence/advisor1/ZU", "hierarchy_root/client_correspondence/advisor1/AP"]
-    # path_object.makedirs(parents=True)
-    # maybe put this in the function path_constructor()
+    for path in paths:
+        path.mkdir(parents=True)
 
-
-    print(hierarchy_root)
-    # loop over the provided folder hierarchy, creating all folders per level
+    # create directories, abort if already existing?
     # return absolute paths of the created folders
     # return None, if error?
     # reverse created folders if error encountered
@@ -62,4 +59,8 @@ def path_creator(directories):
 
     return paths
 
-print(path_creator([["advisor_1", "advisor_2"], ["ZU", "AP"]]))
+#print(path_creator([["advisor_1", "advisor_2"], ["ZU", "AP"]]))
+
+top_level = "client_correspondence"
+
+create_folder_hierarchy(top_level, [["advisor_1", "advisor_2"], ["ZU", "AP"]])
