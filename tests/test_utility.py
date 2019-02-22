@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from mailmerge.utility import path_creator, create_folder_hierarchy
 
