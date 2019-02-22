@@ -6,26 +6,56 @@ from tkinter import filedialog, Tk
 from itertools import product
 
 
-def create_folder_hierarchy(top_level_dir, sub_directories):
-    # prevent second window pop up
+def prompt_filepath():
+    """
+    Prompts the user to select a directory and returns its absolute OS-specific filepath as a pathlib.Path object.
+
+    Returns
+    -------
+    hierarchy_root: pathlib.Path
+        Contains an absolute filepath.
+    """
+    # prevent second window pop up when prompting in askdirectory
     root = Tk()
     root.withdraw()
 
     # receive 'root' directory path in which the folder hierarchy should be created,
     hierarchy_root = Path(filedialog.askdirectory())
 
+    return hierarchy_root
+    # TODO create test
+
+
+def create_folder_hierarchy(hierarchy_root, top_level_dir, sub_directories):
+    """
+    Creates directory tree in a given directory.
+
+    Parameters
+    ----------
+    top_level_dir: str
+        Specifies the name of the top level directory, in which the `sub_directories` should be created. This needs
+        to be a valid directory name for the respective OS.
+
+    sub_directories: list
+        A 2d list, each row represents one directory level. Row 0 == top or `root` level directory.
+        Row 1 would then be a list containing the sub directories for ALL directories in row 0.
+        This means, each directory in row 0 has all the subdirectories of row 1. The elements of the lists need
+        to be strings, specifying valid directory names for the respective OS.
+
+    Returns
+    -------
+    None
+    """
     # construct absolute paths
     paths = []
     for path in path_creator(sub_directories):
-        paths.append(hierarchy_root / top_level / path)
+        paths.append(hierarchy_root / top_level_dir / path)
 
     for path in paths:
-        path.mkdir(parents=True)
+        path.mkdir(parents=True, exist_ok=True)
 
-    # create directories, abort if already existing?
-    # return absolute paths of the created folders
-    # return None, if error?
-    # reverse created folders if error encountered
+    # TODO reverse created folders if error encountered?
+    # TODO return value?
 
 
 def path_creator(directories):
@@ -58,9 +88,3 @@ def path_creator(directories):
         paths.append(path)
 
     return paths
-
-#print(path_creator([["advisor_1", "advisor_2"], ["ZU", "AP"]]))
-
-top_level = "client_correspondence"
-
-create_folder_hierarchy(top_level, [["advisor_1", "advisor_2"], ["ZU", "AP"]])
