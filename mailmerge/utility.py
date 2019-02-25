@@ -4,7 +4,7 @@ Contains various helper functions.
 from pathlib import Path
 from tkinter import filedialog, Tk
 from itertools import product
-
+import pandas as pd
 
 def prompt_filepath():
     """
