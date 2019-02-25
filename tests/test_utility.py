@@ -1,6 +1,5 @@
 from pathlib import Path
-from mailmerge.utility import path_creator, create_folder_hierarchy
-
+from mailmerge.utility import path_creator, create_folder_hierarchy, prompt_filepath
 
 def test_path_creator():
     test_input = [["advisor_1", "advisor_2"], ["offer_documents", "appropriateness_test"]]
@@ -26,3 +25,12 @@ def test_create_folder_hierarchy(tmp_path):
     # check if paths have been created by create_folder_hierarchy
     for path in expected_paths:
         assert path.exists()
+
+
+def test_prompt_filepath(tmp_path, mocker):
+    expected = Path(tmp_path)
+
+    # Patch askdirectory method with lambda function
+    mocker.patch("tkinter.filedialog.askdirectory", lambda: tmp_path)
+    result = prompt_filepath()
+    assert result == expected

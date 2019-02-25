@@ -23,7 +23,6 @@ def prompt_filepath():
     hierarchy_root = Path(filedialog.askdirectory())
 
     return hierarchy_root
-    # TODO create test
 
 
 def create_folder_hierarchy(hierarchy_root, top_level_dir, sub_directories):
