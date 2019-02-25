@@ -1,6 +1,6 @@
 import pandas as pd
 from tkinter import filedialog
-# Keys are the column headers in the data source,
+# Keys are the column headers in the data source, keys and data source have to match or a key error will be raised
 # values are the standardized way the respective data source is represented
 FIELD_MAP_CLIENTS = {"client_id"}
 FIELD_MAP_PROJECT = {"project_id": "project_id", "project_name": "project_name"}
@@ -12,6 +12,8 @@ class MailProject:
         self.project_name = project_name
         if client_list is None:
             self.client_list = []
+
+        # TODO add more attributes, also: update field map and test_data accordingly
 
     def __repr__(self):
         return f"MailProject({self.project_id}, '{self.project_name}')"
@@ -28,6 +30,13 @@ class MailProject:
         projects = []
         for _, project in project_data.iterrows():
             project = project.to_dict()
+
+            # Use field map to translate excel column headers (keys) to expected values
+            for key in project.copy():
+                if field_map[key] not in project:
+                    project[field_map[key]] = project[key]
+                    del project[key]
+
             projects.append(cls(**project))
 
         if len(project_data) > 1:
