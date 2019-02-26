@@ -15,16 +15,24 @@ TEST_PROJECT_SINGLE_2 = {"project_id": 178, "project_name": "Another Project Gmb
 TEST_PROJECT_MULTIPLE = [TEST_PROJECT_SINGLE_1, TEST_PROJECT_SINGLE_2]
 TEST_DATA_SOURCE_PATH = Path("../data/test/test_data_source_base.xlsx")
 
+TEST_CLIENT_1 = {"client_id":1, "first_name": "John1", "last_name":	"Doe1", "address_mailing_street": "Client 1 Str. 1",
+                 "address_mailing_zip": "80001", "address_mailing_city": "Munich",
+                 "address_notify_street": "Client 1 Str. 1", "address_notify_zip":	"80001",
+                 "address_notify_city":	"Munich", "amount":	50000, "subscription_am_authorized": 1,
+                 "mailing_as_email": 1, "depot_no":	"123456789", "depot_bic": "SOMEALPHANUMERICSTRING"}
+
+TEST_CLIENT_2 = {}
+
 
 class TestMailProject:
-    def test_simple_instantiation_project_1(self):
+    def test_direct_instantiation_project_1(self):
         project = MailProject(**TEST_PROJECT_SINGLE_1)
 
         # Test that all attributes have been set properly.
         for key in TEST_PROJECT_SINGLE_1:
             assert getattr(project, key) == TEST_PROJECT_SINGLE_1[key]
 
-    def test_simple_instantiation_project_2(self):
+    def test_direct_instantiation_project_2(self):
         project = MailProject(**TEST_PROJECT_SINGLE_2)
 
         # Test that all attributes have been set properly.
@@ -74,3 +82,23 @@ class TestMailProject:
         for key in project1_attributes:
             assert project1_attributes[key] == project2_attributes[key]
 
+    def test_str(self):
+        project = MailProject(**TEST_PROJECT_SINGLE_1)
+
+        expected = (f"Project ID ({TEST_PROJECT_SINGLE_1['project_id']}): {TEST_PROJECT_SINGLE_1['project_name']}, "
+                    f"issuance {TEST_PROJECT_SINGLE_1['date_issuance'].day}"
+                    f".{TEST_PROJECT_SINGLE_1['date_issuance'].month}"
+                    f".{TEST_PROJECT_SINGLE_1['date_issuance'].year}, "
+                    f"maturity {TEST_PROJECT_SINGLE_1['date_maturity'].day}"
+                    f".{TEST_PROJECT_SINGLE_1['date_maturity'].month}"
+                    f".{TEST_PROJECT_SINGLE_1['date_maturity'].year}")
+
+        assert str(project) == expected
+
+
+class TestClient():
+    def test_direct_instantiation(self):
+        client = Client(**TEST_CLIENT_1)
+
+        for key in TEST_CLIENT_1:
+            assert getattr(client, key) == TEST_CLIENT_1[key]

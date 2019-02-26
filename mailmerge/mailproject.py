@@ -35,6 +35,11 @@ class MailProject:
         # Assumption: two projects are the same if their attributes are the same.
         return vars(self) == vars(other)
 
+    def __str__(self):
+        return (f"Project ID ({self.project_id}): {self.project_name}, "
+                f"issuance {self.date_issuance.day}.{self.date_issuance.month}.{self.date_issuance.year}, "
+                f"maturity {self.date_maturity.day}.{self.date_maturity.month}.{self.date_maturity.year}")
+
     @classmethod
     def from_excel(cls, project_data_path, project_data_sheet_name, field_map):
         project_data = MailProject._parse_excel(project_data_path, project_data_sheet_name, field_map.keys())
