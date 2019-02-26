@@ -106,15 +106,6 @@ class Client:
 
 if __name__ == "__main__":
 
-    #project = MailProject()
-    #print(project.client_data)
-
-    c_data = {"first_name": "Hans", "last_name": "Schmidt"}
-
-    # client = Client(c_data)
-    # print(client.__dict__.keys())
-    # print(client.first_name)
-
 
     path = filedialog.askopenfilename()
     project = MailProject("151", "Some Project Name")
