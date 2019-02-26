@@ -3,20 +3,33 @@ from tkinter import filedialog
 # Keys are the column headers in the data source, keys and data source have to match or a key error will be raised
 # values are the standardized way the respective data source is represented
 FIELD_MAP_CLIENTS = {"client_id"}
-FIELD_MAP_PROJECT = {"project_id": "project_id", "project_name": "project_name"}
+FIELD_MAP_PROJECT = {"project_id": "project_id", "project_name": "project_name", "date_issuance": "date_issuance",
+                     "date_maturity": "date_maturity", "coupon_rate": "coupon_rate",
+                     "commercial_register_number": "commercial_register_number", "issue_volume_min": "issue_volume_min",
+                     "issue_volume_max": "issue_volume_max", "collateral_string": "collateral_string"}
 
 
 class MailProject:
-    def __init__(self, project_id, project_name, client_list=None):
+    def __init__(self, project_id, project_name, date_issuance, date_maturity, coupon_rate, commercial_register_number,
+                 issue_volume_min, issue_volume_max, collateral_string, client_list=None, ):
         self.project_id = project_id
         self.project_name = project_name
+        self.date_issuance = date_issuance
+        self.date_maturity = date_maturity
+        self.coupon_rate = coupon_rate
+        self.commercial_register_number = commercial_register_number
+        self.issue_volume_min = issue_volume_min
+        self.issue_volume_max = issue_volume_max
+        self.collateral_string = collateral_string
+
         if client_list is None:
             self.client_list = []
 
-        # TODO add more attributes, also: update field map and test_data accordingly
-
     def __repr__(self):
-        return f"MailProject({self.project_id}, '{self.project_name}')"
+        # Make sure that pd.Timestamp object gets created when using this string
+        return (f"MailProject({self.project_id}, '{self.project_name}', pd.Timestamp('{self.date_issuance}'), "
+                f"pd.Timestamp('{self.date_maturity}'), {self.coupon_rate}, '{self.commercial_register_number}',"
+                f"{self.issue_volume_min}, {self.issue_volume_max}, '{self.collateral_string}')")
 
     def __eq__(self, other):
         # Assumption: two projects are the same if their attributes are the same.
@@ -59,17 +72,29 @@ class MailProject:
 
 
 class Client:
-    def __init__(self, client_id, first_name, last_name, address_mailing, address_notify,
-                 amount, subscription_am_authorized, mailing_as_email, depot):
+    def __init__(self, client_id, first_name, last_name,
+                 address_mailing_street, address_mailing_zip, address_mailing_city,
+                 address_notify_street, address_notify_zip, address_notify_city,
+                 amount, subscription_am_authorized, mailing_as_email, depot_no, depot_bic):
+        # Core data - client specific
         self.client_id = client_id
         self.first_name = first_name
         self.last_name = last_name
-        self.address_mailing = address_mailing  # as tuple
-        self.address_notify = address_notify  # as tuple
+
+        # Addresses for mailing - client specific
+        self.address_mailing_street = address_mailing_street
+        self.address_mailing_zip = address_mailing_zip
+        self.address_mailing_city = address_mailing_city
+        self.address_notify_street = address_notify_street
+        self.address_notify_zip = address_notify_zip
+        self.address_notify_city = address_notify_city
+
+        # Data pertaining to an individual bond subscription
         self.amount = amount
         self.subscription_am_authorized = subscription_am_authorized
         self.mailing_as_email = mailing_as_email
-        self.depot = depot  # as tuple
+        self.depot_no = depot_no
+        self.depot_bic = depot_bic
 
     def __repr__(self):
         return (f"Client({self.client_id}, '{self.first_name}', '{self.last_name}',"
