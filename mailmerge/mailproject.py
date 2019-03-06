@@ -1,10 +1,11 @@
 import pandas as pd
 from tkinter import filedialog
+from .utility import mailmerge_factory
 
 
 class MailProject:
     def __init__(self, project_id, project_name, date_issuance, date_maturity, coupon_rate, commercial_register_number,
-                 issue_volume_min, issue_volume_max, collateral_string, client_list=None):
+                 issue_volume_min, issue_volume_max, collateral_string, clients=None):
         # Core data
         self.project_id = project_id
         self.project_name = project_name
@@ -17,8 +18,8 @@ class MailProject:
         self.issue_volume_max = issue_volume_max
         self.collateral_string = collateral_string
 
-        if client_list is None:
-            self.client_list = []
+        if clients is None:
+            self.clients = []
 
     def __repr__(self):
         # Make sure that pd.Timestamp object gets created when using this string
@@ -32,10 +33,6 @@ class MailProject:
                 f"{self.issue_volume_max},"
                 f"'{self.collateral_string}')")
 
-    def __eq__(self, other):
-        # Assumption: two projects are the same if their attributes are the same.
-        return vars(self) == vars(other)
-
     def __str__(self):
         return (f"Project ID ({self.project_id}): "
                 f"{self.project_name}, "
@@ -46,40 +43,23 @@ class MailProject:
                 f".{self.date_maturity.month}"
                 f".{self.date_maturity.year}")
 
+    def __eq__(self, other):
+        # Assumption: two projects are the same if their attributes are the same.
+        return vars(self) == vars(other)
+
     @classmethod
-    def from_excel(cls, project_data_path, project_data_sheet_name, field_map):
-        project_data = MailProject._parse_excel(project_data_path, project_data_sheet_name, field_map.keys())
+    def from_excel(cls, project_data_path, project_data_sheet_name, project_field_map):
+        return mailmerge_factory(cls, project_data_path, project_data_sheet_name, project_field_map)
 
-        # Extract one or more projects from the data source and instantiate one or more instances of MailProject
-        projects = []
-        for _, project in project_data.iterrows():
-            project = project.to_dict()
+    def create_clients(self, client_data_path, client_data_sheet_name, client_field_map):
+        # obtain DataFrame with only the columns of field_maps.keys()
+        clients = mailmerge_factory(Client, client_data_path, client_data_sheet_name, client_field_map.keys())
 
-            # Use field map to translate excel column headers (keys) to expected values
-            for key in project.copy():
-                if field_map[key] not in project:
-                    project[field_map[key]] = project[key]
-                    del project[key]
-
-            projects.append(cls(**project))
-
-        if len(project_data) > 1:
-            return projects
+        if self.clients:
+            # prevent override of the clients stored in the MailProject instance.
+            raise ValueError("At least one client has already been added to this project.")
         else:
-            return projects[0]
-
-    @staticmethod
-    def _parse_excel(filepath, sheet_name, field_list):
-        # Extract only relevant fields: all fields in field_list
-        df = pd.read_excel(filepath, sheet_name)[field_list]
-        return df
-
-    def create_clients(self):
-        # TODO update this, doesn't work currently because class definitions of MailProject and Client have changed
-        for _, row in self.client_data.iterrows():
-            # Convert each row to a dict, each dict representing one client.
-            # Use this dict as argument for instantiating Client instances.
-            self.client_list.append(Client(*row.to_dict()))
+            self.clients.extend(clients)
 
 
 class Client:
@@ -108,11 +88,29 @@ class Client:
         self.depot_bic = depot_bic
 
     def __repr__(self):
-        return (f"Client({self.client_id}, '{self.first_name}', '{self.last_name}',"
-                f"'{self.address_mailing}', '{self.address_notify}')")
+        # Watch out for data types. Strings are enclosed by '' (e.g., first_name), while numerics are not
+        # (e.g., client_id)
+        return (f"Client({self.client_id}, "
+                f"'{self.first_name}', "
+                f"'{self.last_name}',"
+                f"'{self.address_mailing_street}', "
+                f"'{self.address_mailing_zip}', "
+                f"'{self.address_mailing_city}', "
+                f"'{self.address_notify_street}', "
+                f"'{self.address_notify_zip}', "
+                f"'{self.address_notify_city}', "
+                f"{self.amount}, "
+                f"{self.subscription_am_authorized}, "
+                f"{self.mailing_as_email}, "
+                f"'{self.depot_no}', "
+                f"'{self.depot_bic}')")
 
     def __str__(self):
         return f"Client ID ({self.client_id}):{self.first_name}, {self.last_name}"
+
+    def __eq__(self, other):
+        # Assumption: two projects are the same if their attributes are the same.
+        return vars(self) == vars(other)
 
 
 if __name__ == "__main__":

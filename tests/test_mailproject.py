@@ -2,10 +2,22 @@ import pandas as pd  # used for testing the __repr__ of MailProject
 from mailmerge.mailproject import MailProject, Client
 from mailmerge.fieldmap import FIELD_MAP_PROJECT
 from tests.constants import TEST_PROJECT_SINGLE_1, TEST_PROJECT_SINGLE_2, TEST_PROJECT_MULTIPLE, \
-                            TEST_DATA_SOURCE_PATH, TEST_CLIENT_1
+                            TEST_DATA_SOURCE_PATH, TEST_CLIENT_1, TEST_CLIENT_2
 
 
 class TestMailProject:
+    def test_eq_operator(self):
+        # All other tests are dependent on the equality operation defined in the class
+        project1 = MailProject(**TEST_PROJECT_SINGLE_1)
+        project2 = MailProject(**TEST_PROJECT_SINGLE_1)
+
+        # Test for the same projects
+        assert project1 == project2
+
+        # Test for different projects
+        project3 = MailProject(**TEST_PROJECT_SINGLE_2)
+        assert project1 != project3
+
     def test_direct_instantiation_project_1(self):
         project = MailProject(**TEST_PROJECT_SINGLE_1)
 
@@ -41,17 +53,6 @@ class TestMailProject:
 
         assert result == expected
 
-    def test_eq_operator(self):
-        project1 = MailProject(**TEST_PROJECT_SINGLE_1)
-        project2 = MailProject(**TEST_PROJECT_SINGLE_1)
-
-        # Test for the same projects
-        assert project1 == project2
-
-        # Test for different projects
-        project3 = MailProject(**TEST_PROJECT_SINGLE_2)
-        assert project1 != project3
-
     def test_repr(self):
         project1 = MailProject(**TEST_PROJECT_SINGLE_1)
         project2 = eval(repr(project1))
@@ -62,6 +63,9 @@ class TestMailProject:
         # Test if each attribute matches
         for key in project1_attributes:
             assert project1_attributes[key] == project2_attributes[key]
+
+        # Test using __eq__ of the class
+        assert project1 == project2
 
     def test_str(self):
         project = MailProject(**TEST_PROJECT_SINGLE_1)
@@ -78,8 +82,48 @@ class TestMailProject:
 
 
 class TestClient():
-    def test_direct_instantiation(self):
+    def test_eq_operator(self):
+        # All other tests are dependent on the equality operation defined in the class
+        client_1 = Client(**TEST_CLIENT_1)
+        client_2 = Client(**TEST_CLIENT_1)
+
+        # Test for the same projects
+        assert client_1 == client_2
+
+        # Test for different projects
+        client_3 = Client(**TEST_CLIENT_2)
+        assert client_1 != client_3
+
+    def test_direct_instantiation_1(self):
         client = Client(**TEST_CLIENT_1)
 
         for key in TEST_CLIENT_1:
             assert getattr(client, key) == TEST_CLIENT_1[key]
+
+    def test_direct_instantiation_2(self):
+        client = Client(**TEST_CLIENT_2)
+
+        for key in TEST_CLIENT_2:
+            assert getattr(client, key) == TEST_CLIENT_2[key]
+
+    def test_repr(self):
+        client_1 = Client(**TEST_CLIENT_1)
+        client_2 = eval(repr(client_1))
+
+        client_1_attributes = vars(client_1)
+        client_2_attributes = vars(client_2)
+
+        # Test if each attribute matches
+        for key in client_1_attributes:
+            assert client_1_attributes[key] == client_2_attributes[key]
+
+        # Test using __eq__ of the class
+        assert client_1 == client_2
+
+    def test_str(self):
+        client = Client(**TEST_CLIENT_1)
+
+        expected = (f"Client ID ({TEST_CLIENT_1['client_id']}):"
+                    f"{TEST_CLIENT_1['first_name']}, {TEST_CLIENT_1['last_name']}")
+
+        str(client) == expected

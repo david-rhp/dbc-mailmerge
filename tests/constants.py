@@ -47,4 +47,19 @@ TEST_CLIENT_1 = {"client_id": 1,
                  "depot_no": "123456789",
                  "depot_bic": "SOMEALPHANUMERICSTRING"}
 
-TEST_CLIENT_2 = {}
+TEST_CLIENT_2 = {"client_id": 4,
+                 "first_name": "Jane4",
+                 "last_name": "Doe4",
+
+                 "address_mailing_street": "Client 4 Str. 4",
+                 "address_mailing_zip": "80004",
+                 "address_mailing_city": "São Paulo",
+                 "address_notify_street": "Different Client 4 Str. 4",
+                 "address_notify_zip":	"90004",
+                 "address_notify_city":	"Barcelona",
+
+                 "amount":	25000,
+                 "subscription_am_authorized": 0,
+                 "mailing_as_email": 0,
+                 "depot_no": "0048522358",
+                 "depot_bic": "00BICNUM120X0"}

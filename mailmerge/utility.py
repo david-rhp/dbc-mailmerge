@@ -87,3 +87,34 @@ def path_creator(directories):
         paths.append(path)
 
     return paths
+
+
+def parse_excel(filepath, sheet_name, field_list):
+    # TODO add docstring
+    # TODO add test
+    # Extract only relevant fields: all fields in field_list
+    df = pd.read_excel(filepath, sheet_name)[field_list]
+    return df
+
+
+def mailmerge_factory(cls, data_path, data_sheet_name, field_map):
+    # obtain DataFrame with only the columns of field_maps.keys()
+    data = parse_excel(data_path, data_sheet_name, field_map.keys())
+
+    # Extract one or more projects from the data source and instantiate one or more instances of cls
+    instances = []
+    for _, record in data.iterrows():
+        record = record.to_dict()
+
+        # Use field map to translate excel column headers (keys) to expected values
+        for key in record.copy():
+            if field_map[key] not in record:
+                record[field_map[key]] = record[key]
+                del record[key]
+
+        instances.append(cls(**record))
+
+    if len(data) > 1:
+        return instances
+    else:
+        return instances[0]
