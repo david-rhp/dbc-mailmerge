@@ -53,7 +53,7 @@ class MailProject:
 
     def create_clients(self, client_data_path, client_data_sheet_name, client_field_map):
         # obtain DataFrame with only the columns of field_maps.keys()
-        clients = mailmerge_factory(Client, client_data_path, client_data_sheet_name, client_field_map.keys())
+        clients = mailmerge_factory(Client, client_data_path, client_data_sheet_name, client_field_map)
 
         if self.clients:
             # prevent override of the clients stored in the MailProject instance.
@@ -68,24 +68,24 @@ class Client:
                  address_notify_street, address_notify_zip, address_notify_city,
                  amount, subscription_am_authorized, mailing_as_email, depot_no, depot_bic):
         # Core data - client specific
-        self.client_id = client_id
+        self.client_id = int(client_id)
         self.first_name = first_name
         self.last_name = last_name
 
         # Addresses for mailing - client specific
         self.address_mailing_street = address_mailing_street
-        self.address_mailing_zip = address_mailing_zip
+        self.address_mailing_zip = str(address_mailing_zip)
         self.address_mailing_city = address_mailing_city
         self.address_notify_street = address_notify_street
-        self.address_notify_zip = address_notify_zip
+        self.address_notify_zip = str(address_notify_zip)
         self.address_notify_city = address_notify_city
 
         # Data pertaining to an individual bond subscription
         self.amount = amount
         self.subscription_am_authorized = subscription_am_authorized
         self.mailing_as_email = mailing_as_email
-        self.depot_no = depot_no
-        self.depot_bic = depot_bic
+        self.depot_no = str(depot_no)
+        self.depot_bic = str(depot_bic)
 
     def __repr__(self):
         # Watch out for data types. Strings are enclosed by '' (e.g., first_name), while numerics are not
@@ -106,7 +106,7 @@ class Client:
                 f"'{self.depot_bic}')")
 
     def __str__(self):
-        return f"Client ID ({self.client_id}):{self.first_name}, {self.last_name}"
+        return f"Client ID ({self.client_id}): {self.first_name}, {self.last_name}"
 
     def __eq__(self, other):
         # Assumption: two projects are the same if their attributes are the same.

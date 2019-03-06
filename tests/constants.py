@@ -63,3 +63,5 @@ TEST_CLIENT_2 = {"client_id": 4,
                  "mailing_as_email": 0,
                  "depot_no": "0048522358",
                  "depot_bic": "00BICNUM120X0"}
+
+TEST_CLIENT_MULTIPLE = [TEST_CLIENT_1, TEST_CLIENT_2]
