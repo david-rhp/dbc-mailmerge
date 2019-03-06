@@ -1,19 +1,14 @@
 import pandas as pd
 from tkinter import filedialog
-# Keys are the column headers in the data source, keys and data source have to match or a key error will be raised
-# values are the standardized way the respective data source is represented
-FIELD_MAP_CLIENTS = {"client_id"}
-FIELD_MAP_PROJECT = {"project_id": "project_id", "project_name": "project_name", "date_issuance": "date_issuance",
-                     "date_maturity": "date_maturity", "coupon_rate": "coupon_rate",
-                     "commercial_register_number": "commercial_register_number", "issue_volume_min": "issue_volume_min",
-                     "issue_volume_max": "issue_volume_max", "collateral_string": "collateral_string"}
 
 
 class MailProject:
     def __init__(self, project_id, project_name, date_issuance, date_maturity, coupon_rate, commercial_register_number,
-                 issue_volume_min, issue_volume_max, collateral_string, client_list=None, ):
+                 issue_volume_min, issue_volume_max, collateral_string, client_list=None):
+        # Core data
         self.project_id = project_id
         self.project_name = project_name
+
         self.date_issuance = date_issuance
         self.date_maturity = date_maturity
         self.coupon_rate = coupon_rate
@@ -27,18 +22,29 @@ class MailProject:
 
     def __repr__(self):
         # Make sure that pd.Timestamp object gets created when using this string
-        return (f"MailProject({self.project_id}, '{self.project_name}', pd.Timestamp('{self.date_issuance}'), "
-                f"pd.Timestamp('{self.date_maturity}'), {self.coupon_rate}, '{self.commercial_register_number}',"
-                f"{self.issue_volume_min}, {self.issue_volume_max}, '{self.collateral_string}')")
+        return (f"MailProject({self.project_id},"
+                f"'{self.project_name}',"
+                f"pd.Timestamp('{self.date_issuance}'), "
+                f"pd.Timestamp('{self.date_maturity}'), "
+                f"{self.coupon_rate},"
+                f"'{self.commercial_register_number}',"
+                f"{self.issue_volume_min},"
+                f"{self.issue_volume_max},"
+                f"'{self.collateral_string}')")
 
     def __eq__(self, other):
         # Assumption: two projects are the same if their attributes are the same.
         return vars(self) == vars(other)
 
     def __str__(self):
-        return (f"Project ID ({self.project_id}): {self.project_name}, "
-                f"issuance {self.date_issuance.day}.{self.date_issuance.month}.{self.date_issuance.year}, "
-                f"maturity {self.date_maturity.day}.{self.date_maturity.month}.{self.date_maturity.year}")
+        return (f"Project ID ({self.project_id}): "
+                f"{self.project_name}, "
+                f"issuance {self.date_issuance.day}"
+                f".{self.date_issuance.month}"
+                f".{self.date_issuance.year}, "
+                f"maturity {self.date_maturity.day}"
+                f".{self.date_maturity.month}"
+                f".{self.date_maturity.year}")
 
     @classmethod
     def from_excel(cls, project_data_path, project_data_sheet_name, field_map):
@@ -116,10 +122,6 @@ if __name__ == "__main__":
     project = MailProject("151", "Some Project Name")
     print(project)
     print(vars(project))
-
-    project2 = MailProject.from_excel(path, "project_data_single", FIELD_MAP_PROJECT)
-    print(project2)
-
 
 
     #project.create_clients()
