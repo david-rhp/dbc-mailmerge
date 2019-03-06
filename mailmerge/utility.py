@@ -100,6 +100,8 @@ def parse_excel(filepath, sheet_name, field_list):
 
 
 def mailmerge_factory(cls, data_path, data_sheet_name, field_map):
+    # TODO add docstring
+    # TODO add test
     # obtain DataFrame with only the columns of field_maps.keys()
     data = parse_excel(data_path, data_sheet_name, field_map.keys())
 
