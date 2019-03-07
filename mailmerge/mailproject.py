@@ -63,14 +63,17 @@ class MailProject:
 
 
 class Client:
-    def __init__(self, client_id, first_name, last_name,
+    def __init__(self, client_id, title, first_name, last_name, salutation_address_field, salutation,
                  address_mailing_street, address_mailing_zip, address_mailing_city,
                  address_notify_street, address_notify_zip, address_notify_city,
                  amount, subscription_am_authorized, mailing_as_email, depot_no, depot_bic):
         # Core data - client specific
         self.client_id = int(client_id)
+        self.title = title
         self.first_name = first_name
         self.last_name = last_name
+        self.salutation_address_field = salutation_address_field
+        self.salutation = salutation
 
         # Addresses for mailing - client specific
         self.address_mailing_street = address_mailing_street
@@ -91,8 +94,11 @@ class Client:
         # Watch out for data types. Strings are enclosed by '' (e.g., first_name), while numerics are not
         # (e.g., client_id)
         return (f"Client({self.client_id}, "
+                f"'{self.title}', "
                 f"'{self.first_name}', "
-                f"'{self.last_name}',"
+                f"'{self.last_name}', "
+                f"'{self.salutation_address_field}', "
+                f"'{self.salutation}', "
                 f"'{self.address_mailing_street}', "
                 f"'{self.address_mailing_zip}', "
                 f"'{self.address_mailing_city}', "

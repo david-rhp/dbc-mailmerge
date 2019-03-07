@@ -31,8 +31,11 @@ TEST_PROJECT_MULTIPLE = [TEST_PROJECT_SINGLE_1, TEST_PROJECT_SINGLE_2]
 
 
 TEST_CLIENT_1 = {"client_id": 1,
+                 "title": "",
                  "first_name": "John1",
                  "last_name": "Doe1",
+                 "salutation_address_field": "Herrn",
+                 "salutation": "er Herr",
 
                  "address_mailing_street": "Client 1 Str. 1",
                  "address_mailing_zip": "80001",
@@ -48,8 +51,11 @@ TEST_CLIENT_1 = {"client_id": 1,
                  "depot_bic": "SOMEALPHANUMERICSTRING"}
 
 TEST_CLIENT_2 = {"client_id": 4,
+                 "title": "Dr.",
                  "first_name": "Jane4",
                  "last_name": "Doe4",
+                 "salutation_address_field": "Frau",
+                 "salutation": "e Frau",
 
                  "address_mailing_street": "Client 4 Str. 4",
                  "address_mailing_zip": "80004",

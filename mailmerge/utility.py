@@ -96,6 +96,7 @@ def parse_excel(filepath, sheet_name, field_list):
     #df = pd.read_excel(filepath, sheet_name)[field_list]
     df = pd.read_excel(filepath, sheet_name)
     df = df[field_list]
+    df.fillna('', inplace=True)  # fill NaN with empty string so comparisons for the entire instance works
     return df
 
 
