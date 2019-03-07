@@ -1,5 +1,5 @@
 from pathlib import Path
-from mailmerge.utility import path_creator, create_folder_hierarchy, prompt_filepath
+from dbcmailmerge.utility import path_creator, create_folder_hierarchy, prompt_filepath
 
 
 def test_path_creator():

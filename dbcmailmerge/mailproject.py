@@ -1,7 +1,9 @@
 import pandas as pd
 from tkinter import filedialog
-from .utility import mailmerge_factory
+from .utility import mailmerge_factory, translate_dict
 
+from mailmerge import MailMerge
+from dbcmailmerge.fieldmap import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
 
 class MailProject:
     def __init__(self, project_id, project_name, date_issuance, date_maturity, coupon_rate, commercial_register_number,
@@ -25,23 +27,19 @@ class MailProject:
         # Make sure that pd.Timestamp object gets created when using this string
         return (f"MailProject({self.project_id},"
                 f"'{self.project_name}',"
-                f"pd.Timestamp('{self.date_issuance}'), "
-                f"pd.Timestamp('{self.date_maturity}'), "
-                f"{self.coupon_rate},"
-                f"'{self.commercial_register_number}',"
-                f"{self.issue_volume_min},"
-                f"{self.issue_volume_max},"
+                f"'{self.date_issuance}', "
+                f"'{self.date_maturity}', "
+                f"{self.coupon_rate}, "
+                f"'{self.commercial_register_number}', "
+                f"{self.issue_volume_min}, "
+                f"{self.issue_volume_max}, "
                 f"'{self.collateral_string}')")
 
     def __str__(self):
         return (f"Project ID ({self.project_id}): "
                 f"{self.project_name}, "
-                f"issuance {self.date_issuance.day}"
-                f".{self.date_issuance.month}"
-                f".{self.date_issuance.year}, "
-                f"maturity {self.date_maturity.day}"
-                f".{self.date_maturity.month}"
-                f".{self.date_maturity.year}")
+                f"issuance {self.date_issuance}, "
+                f"maturity {self.date_maturity}")
 
     def __eq__(self, other):
         # Assumption: two projects are the same if their attributes are the same.
@@ -61,14 +59,72 @@ class MailProject:
         else:
             self.clients.extend(clients)
 
+    def select_clients(self, selection_criteria):
+        # select only relevant clients
+        selected_clients = []
+        for client in self.clients:
+            selected = True
+
+            for criterion in selection_criteria.keys():
+                if not selection_criteria[criterion](getattr(client, criterion)):
+                    selected = False
+
+            if selected:
+                selected_clients.append(client)
+
+        return selected_clients
+
+    def create_client_documents(self, selected_clients):
+
+        merge_records = []
+        for client in selected_clients:
+            # Apply formatting rules to title and street
+            record = vars(client)
+
+            # The MailMerge.merge method from docx-mailmerge strips the whitespace around each mergefield.
+            # In the cases where a client has a title, the format is, for example, <title><first_name> <last_name>
+            # This means that if there is no title, title should be replaced by an empty string, if there is, title
+            # should have a trailing space in order to prevent title being 'together' with first_name, such as
+            # Dr.Jane Doe => Dr. Jane Doe
+            # Therefore, format the first_name field and salutation field (where the same as above occurs).
+            if record["title"]:
+                record["first_name"] = record["title"] + ' ' + record["first_name"]
+                record["salutation"] += ' ' + record["title"]
+                record["title"] = ''
+
+            record["address_mailing_street"] += '\n'
+            record["amount"] = format(record["amount"], ",.2f")
+
+            # translate client attributes to match excel version, thus, matching the word mergefield placeholders
+            record = translate_dict(record, FIELD_MAP_CLIENTS, reverse=True)
+            record = {key: str(value) for key, value in record.items()}  # convert value to str for MailMerge
+            merge_records.append(record)
+
+        # translate project data so that the fields (keys) match the names in the word template
+        project_data = vars(self)
+        del project_data["clients"]  # not part of the fields in the template
+        project_data = translate_dict(project_data, FIELD_MAP_PROJECT, reverse=True)
+        project_data = {key: str(value) for key, value in project_data.items()}  # convert value to str for MailMerge
+
+        template_path = "../data/templates/cover_letter.docx"
+        for record in merge_records:
+            # add project data
+            record.update(project_data)
+
+            with MailMerge(template_path) as document:
+                document.merge(**record)
+                document.write('output.docx')
+
 
 class Client:
-    def __init__(self, client_id, title, first_name, last_name, salutation_address_field, salutation,
+    def __init__(self, client_id, advisor, title, first_name, last_name, salutation_address_field, salutation,
                  address_mailing_street, address_mailing_zip, address_mailing_city,
                  address_notify_street, address_notify_zip, address_notify_city,
                  amount, subscription_am_authorized, mailing_as_email, depot_no, depot_bic):
         # Core data - client specific
-        self.client_id = int(client_id)
+        self.client_id = client_id
+
+        self.advisor = advisor
         self.title = title
         self.first_name = first_name
         self.last_name = last_name
@@ -84,7 +140,8 @@ class Client:
         self.address_notify_city = address_notify_city
 
         # Data pertaining to an individual bond subscription
-        self.amount = amount
+        # always an int or empty >= 0 in 5k increments, excel sometimes returns floats
+        self.amount = int(amount) if amount else amount
         self.subscription_am_authorized = subscription_am_authorized
         self.mailing_as_email = mailing_as_email
         self.depot_no = str(depot_no)
@@ -94,6 +151,7 @@ class Client:
         # Watch out for data types. Strings are enclosed by '' (e.g., first_name), while numerics are not
         # (e.g., client_id)
         return (f"Client({self.client_id}, "
+                f"'{self.advisor}', "
                 f"'{self.title}', "
                 f"'{self.first_name}', "
                 f"'{self.last_name}', "
@@ -118,6 +176,8 @@ class Client:
         # Assumption: two projects are the same if their attributes are the same.
         return vars(self) == vars(other)
 
+    def create_doc_from_word_template(self, template_path):
+        pass
 
 if __name__ == "__main__":
 

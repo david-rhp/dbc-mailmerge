@@ -2,6 +2,7 @@
 # values are the standardized way the respective data source is represented
 
 FIELD_MAP_CLIENTS = {"db_id": "client_id",
+                     "betreuer": "advisor",
                      "titel": "title",
                      "vorname": "first_name",
                      "nachname": "last_name",

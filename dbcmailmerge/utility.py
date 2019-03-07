@@ -5,6 +5,8 @@ from pathlib import Path
 from tkinter import filedialog, Tk
 from itertools import product
 import pandas as pd
+import numpy as np
+
 
 def prompt_filepath():
     """
@@ -95,6 +97,12 @@ def parse_excel(filepath, sheet_name, field_list):
     # Extract only relevant fields: all fields in field_list
     df = pd.read_excel(filepath, sheet_name)[field_list]
     df.fillna('', inplace=True)  # fill NaN with empty string so comparisons for the entire instance works
+
+    # format datetime
+    df_dates = df.select_dtypes([np.datetime64])
+    for column in df_dates:
+        df[column] = df_dates[column].dt.strftime("%d.%m.%Y")  # example: 31.12.2019
+
     return df
 
 
@@ -110,10 +118,12 @@ def mailmerge_factory(cls, data_path, data_sheet_name, field_map):
         record = record.to_dict()
 
         # Use field map to translate excel column headers (keys) to expected values
-        for key in record.copy():
-            if field_map[key] not in record:
-                record[field_map[key]] = record[key]
-                del record[key]
+        # for key in record.copy():
+        #     if field_map[key] not in record:
+        #         record[field_map[key]] = record[key]
+        #         del record[key]
+
+        record = translate_dict(record, field_map)
 
         instances.append(cls(**record))
 
@@ -121,3 +131,21 @@ def mailmerge_factory(cls, data_path, data_sheet_name, field_map):
         return instances
     else:
         return instances[0]
+
+
+def translate_dict(in_dict, field_map, reverse=False):
+    new_dict = in_dict.copy()
+
+    # use keys or values to translate
+
+    if reverse:
+        # reverse field_map for translation purposes
+        field_map = {value: key for key, value in field_map.items()}
+
+    for key in new_dict.copy():
+        if field_map[key] not in new_dict:
+            new_dict[field_map[key]] = new_dict[key]
+            del new_dict[key]
+
+
+    return new_dict
