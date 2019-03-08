@@ -1,11 +1,15 @@
+import os
 from pathlib import Path
 
 # Document Templates
 ####################
 
-TEMPLATES = {"offer_documents": [Path("../data/templates/cover_letter.docx").absolute(),
-                                 Path("../data/templates/subscription_agreement.docx").absolute()],
-             "appropriateness_test": [Path("../data/templates/appropriateness_test.docx").absolute()]}
+base_path = Path(os.path.dirname(os.path.realpath(__file__))).parents[0]  # 1 level up relative to this module
+
+TEMPLATES = {"offer_documents": [base_path / "data/templates/cover_letter.docx",
+                                 base_path / "data/templates/subscription_agreement.docx"],
+
+             "appropriateness_test": [base_path / "data/templates/appropriateness_test.docx"]}
 
 INCLUDE_STANDARDS = {"offer_documents": True, "appropriateness_test": False}
 

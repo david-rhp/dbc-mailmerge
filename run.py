@@ -1,6 +1,6 @@
 from tkinter import filedialog
 from dbcmailmerge.mailproject import MailProject
-from dbcmailmerge.constants import FIELD_MAP_PROJECT, FIELD_MAP_CLIENTS, INCLUDE_STANDARDS
+from dbcmailmerge.constants import FIELD_MAP_PROJECT, FIELD_MAP_CLIENTS
 import sys
 from pathlib import Path
 from xlrd import XLRDError
@@ -149,7 +149,7 @@ def prompt_files():
         file = filedialog.askopenfile()
         root.update()
 
-        selected_files.append(file)
+        selected_files.append(file.name)  # append filename instead of io.TextWrapper
 
         result = messagebox.askyesno("Select File", "Do you want to select another file?")
         root.update()
@@ -192,5 +192,6 @@ if __name__ == "__main__":
     selected_clients = project.select_clients(selection_criteria)
 
     standard_pdfs = prompt_files()
+    print(standard_pdfs)
     # Create documents and merge
-    project.create_client_documents(selected_clients, INCLUDE_STANDARDS, hierarchy_root, standard_pdfs)
+    project.create_client_documents(selected_clients, hierarchy_root, standard_pdfs)
