@@ -1,8 +1,9 @@
 from pathlib import Path
 from dbcmailmerge.mailproject import MailProject, Client
-from dbcmailmerge.fieldmap import FIELD_MAP_PROJECT, FIELD_MAP_CLIENTS
-from tests.test_constants import TEST_PROJECT_SINGLE_1, TEST_PROJECT_SINGLE_2, TEST_PROJECT_MULTIPLE, \
-                            TEST_DATA_SOURCE_PATH, TEST_CLIENT_1, TEST_CLIENT_2, TEST_CLIENT_MULTIPLE
+from tests.test_constants import (HIERARCHY_ROOT, STANDARD_PDFS, TEST_DATA_SOURCE_PATH,
+                                  TEST_PROJECT_SINGLE_1, TEST_PROJECT_SINGLE_2, TEST_PROJECT_MULTIPLE,
+                                  TEST_CLIENT_1, TEST_CLIENT_2, TEST_CLIENT_MULTIPLE)
+from dbcmailmerge.constants import TEMPLATES, FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT, INCLUDE_STANDARDS
 
 
 class TestMailProject:
@@ -102,7 +103,7 @@ class TestMailProject:
         selection_criteria = {"amount": lambda x: isinstance(x, (int, float))}
         result = project.select_clients(selection_criteria)
 
-        # matches test data source, id 3 excluded because no amount entered in excel
+        # matches tests data source, id 3 excluded because no amount entered in excel
         expected_client_ids = [1, 2, 4]
 
         # Check if the correct amount of clients has been returned
@@ -120,19 +121,7 @@ class TestMailProject:
         selection_criteria = {"amount": lambda x: bool(x)}
         selected_clients = project.select_clients(selection_criteria)
 
-        templates = ["../data/templates/cover_letter.docx", "../data/templates/subscription_agreement.docx"]
-
-        templates = {"offer_documents": ["../data/templates/cover_letter.docx",
-                                         "../data/templates/subscription_agreement.docx"],
-                     "appropriateness_test": ["../data/templates/appropriateness_test.docx"]}
-
-        include_standards = {"offer_documents": True, "appropriateness_test": False}
-
-
-        hierarchy_root = Path('../tests/')
-        standard_pdfs = ["../data/pib.pdf", "../data/factsheet.pdf"]
-
-        project.create_client_documents(selected_clients, templates, include_standards, hierarchy_root, standard_pdfs)
+        project.create_client_documents(selected_clients, TEMPLATES, INCLUDE_STANDARDS, HIERARCHY_ROOT, STANDARD_PDFS)
 
         pass
 

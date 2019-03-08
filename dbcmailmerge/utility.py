@@ -93,7 +93,7 @@ def path_creator(directories):
 
 def parse_excel(filepath, sheet_name, field_list):
     # TODO add docstring
-    # TODO add test
+    # TODO add tests
     # Extract only relevant fields: all fields in field_list
     df = pd.read_excel(filepath, sheet_name)[field_list]
     df.fillna('', inplace=True)  # fill NaN with empty string so comparisons for the entire instance works
@@ -108,7 +108,7 @@ def parse_excel(filepath, sheet_name, field_list):
 
 def mailmerge_factory(cls, data_path, data_sheet_name, field_map):
     # TODO add docstring
-    # TODO add test
+    # TODO add tests
     # obtain DataFrame with only the columns of field_maps.keys()
     data = parse_excel(data_path, data_sheet_name, field_map.keys())
 

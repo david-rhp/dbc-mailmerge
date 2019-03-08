@@ -1,7 +1,17 @@
-import pandas as pd
 from pathlib import Path
 
-TEST_DATA_SOURCE_PATH = Path("../data/test/test_data_source.xlsx")
+
+# Test Documents and Paths
+##########################
+
+HIERARCHY_ROOT = Path('../tests/')
+STANDARD_PDFS = ["../data/tests/pib.pdf", "../data/tests/factsheet.pdf"]
+
+
+# Project and Client Dummy Data
+###############################
+
+TEST_DATA_SOURCE_PATH = Path("../data/tests/test_data_source.xlsx")
 
 TEST_PROJECT_SINGLE_1 = {"project_id": 141,
                          "project_name": "Certainly a Project GmbH & Co. KG",
@@ -73,3 +83,4 @@ TEST_CLIENT_2 = {"client_id": 4,
                  "depot_bic": "00BICNUM120X0"}
 
 TEST_CLIENT_MULTIPLE = [TEST_CLIENT_1, TEST_CLIENT_2]
+

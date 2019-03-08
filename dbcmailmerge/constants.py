@@ -1,6 +1,18 @@
+# Document Templates
+####################
+
+TEMPLATES = {"offer_documents": ["../data/templates/cover_letter.docx",
+                                 "../data/templates/subscription_agreement.docx"],
+             "appropriateness_test": ["../data/templates/appropriateness_test.docx"]}
+
+INCLUDE_STANDARDS = {"offer_documents": True, "appropriateness_test": False}
+
+
+# Field Maps
+############
+
 # Keys are the column headers in the data source, keys and data source have to match or a key error will be raised
 # values are the standardized way the respective data source is represented
-
 FIELD_MAP_CLIENTS = {"db_id": "client_id",
                      "betreuer": "advisor",
                      "titel": "title",

@@ -4,7 +4,7 @@ from .utility import mailmerge_factory, translate_dict, create_folder_hierarchy
 from pathlib import Path
 from mailmerge import MailMerge
 from PyPDF2 import PdfFileMerger
-from dbcmailmerge.fieldmap import FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, FIELD_MAP_PROJECT
+from dbcmailmerge.constants import FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, FIELD_MAP_PROJECT
 from .docx2pdfconverter import convert_to
 
 
