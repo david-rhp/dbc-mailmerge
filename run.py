@@ -27,6 +27,7 @@ def prompt_str(prompt="Please enter a value or type `q` or `quit` to abort"):
 
 
 def prompt_data_source(data_kind, prompt_source_file=True):
+    data_source = None
     if prompt_source_file:
         messagebox.showinfo("Select Data Source", "Select the data source for the project and the respective clients.")
         data_source = filedialog.askopenfilename()
@@ -143,12 +144,14 @@ def prompt_files():
     selected_files = []
     while True:
         file = filedialog.askopenfile()
+        root.update()
+
         selected_files.append(file)
 
         result = messagebox.askyesno("Select File", "Do you want to select another file?")
         root.update()
 
-        if result:
+        if not result:
             return selected_files
 
 
@@ -172,6 +175,9 @@ if __name__ == "__main__":
     selection_criteria = select_filter()
     selected_clients = project.select_clients(selection_criteria)
 
-    prompt_files()
+    standard_pdfs = prompt_files()
+
+    root.destroy()
+
     # Create documents and merge
-    #project.create_client_documents(selected_clients, TEMPLATES, INCLUDE_STANDARDS, hierarchy_root, STANDARD_PDFS)
+    project.create_client_documents(selected_clients, TEMPLATES, INCLUDE_STANDARDS, hierarchy_root, standard_pdfs)
