@@ -76,48 +76,34 @@ class MailProject:
                 selected_clients.append(client)
 
         return selected_clients
+    
+    def create_project_record(self):
+        # translate project data so that the fields (keys) match the names in the word template
+        project_record = vars(self)
+        del project_record["clients"]  # not part of the fields in the template
 
-    def create_client_documents(self, selected_clients):
+        # convert coupon rate from decimal to percentage and use German comma
+        project_record["coupon_rate"] = format(float(project_record["coupon_rate"]) * 100, ".2f").replace('.', ',')
+        project_record = translate_dict(project_record, FIELD_MAP_PROJECT, reverse=True)
+        project_record = {key: str(value) for key, value in project_record.items()}  # cast to str for MailMerge
+
+        return project_record
+    
+    def create_client_documents(self, selected_clients, templates):
+        project_record = self.create_project_record()
         advisors = set()
         merge_records = []
         for client in selected_clients:
-            # Apply formatting rules to title and street
-            client_record = vars(client)
-
             # add client advisor for creation of sub_directories
-            advisors.add(client_record["advisor"])
+            advisors.add(client.advisor)
 
-            # The MailMerge.merge method from docx-mailmerge strips the whitespace around each mergefield.
-            # In the cases where a client has a title, the format is, for example, <title><first_name> <last_name>
-            # This means that if there is no title, title should be replaced by an empty string, if there is, title
-            # should have a trailing space in order to prevent title being 'together' with first_name, such as
-            # Dr.Jane Doe => Dr. Jane Doe
-            # Therefore, format the first_name field and salutation field (where the same as above occurs).
-            if client_record["title"]:
-                client_record["first_name"] = client_record["title"] + ' ' + client_record["first_name"]
-                client_record["salutation"] += ' ' + client_record["title"]
-                client_record["title"] = ''
+            client_record = client.create_client_record()
 
-            client_record["address_mailing_street"] += '\n'
-            client_record["amount"] = format(client_record["amount"], ",.2f")
-
-            # translate client attributes to match excel version, thus, matching the word mergefield placeholders
-            client_record = translate_dict(client_record, FIELD_MAP_CLIENTS, reverse=True)
-            client_record = {key: str(value) for key, value in client_record.items()}  # cast to str for MailMerge
+            # add project data
+            client_record.update(project_record)
 
             merge_records.append(client_record)
 
-
-
-
-
-        # translate project data so that the fields (keys) match the names in the word template
-        project_data = vars(self)
-        del project_data["clients"]  # not part of the fields in the template
-        project_data = translate_dict(project_data, FIELD_MAP_PROJECT, reverse=True)
-        project_data = {key: str(value) for key, value in project_data.items()}  # convert value to str for MailMerge
-
-        template_path = "../data/templates/cover_letter.docx"
         hierarchy_root = Path('../tests/')
         doc_type = "offer_documents"
 
@@ -128,26 +114,31 @@ class MailProject:
         reversed_field_map_clients = {value: key for key, value in FIELD_MAP_CLIENTS.items()}
 
         for client_record in merge_records:
-            # add project data
-            client_record.update(project_data)
-
             # copy word template and replace placeholders with client instance data and project data
-            with MailMerge(template_path) as document:
-                document.merge(**client_record)
+            for template_path in templates:
+                with MailMerge(template_path) as document:
+                    document.merge(**client_record)
 
-                out_path = (hierarchy_root
-                            / type(self).TOP_LEVEL_DIR
-                            / client_record[reversed_field_map_clients["advisor"]]
-                            / doc_type)
+                    out_path = (hierarchy_root
+                                / type(self).TOP_LEVEL_DIR
+                                / client_record[reversed_field_map_clients["advisor"]]
+                                / doc_type)
 
-                filename = (client_record[reversed_field_map_clients["last_name"]]
-                            + '_'
-                            + client_record[reversed_field_map_clients["first_name"]]
-                            + '_'
-                            + client_record[reversed_field_map_clients["client_id"]])
+                    template_name = template_path.split('/')[-1].replace(".docx", '')
 
-                # save document in folder hierarchy
-                document.write(out_path / (filename + ".docx"))
+                    filename = ("Nr._"
+                                + str(self.project_id)
+                                + '_'
+                                + client_record[reversed_field_map_clients["last_name"]]
+                                + '_'
+                                + client_record[reversed_field_map_clients["first_name"]]
+                                + '_'
+                                + client_record[reversed_field_map_clients["client_id"]]
+                                + '_'
+                                + template_name).replace(' ', '_')
+
+                    # save document in folder hierarchy
+                    document.write(out_path / (filename + ".docx"))
 
 
 class Client:
@@ -210,37 +201,31 @@ class Client:
         # Assumption: two projects are the same if their attributes are the same.
         return vars(self) == vars(other)
 
-    def create_doc_from_word_template(self, template_path):
-        advisors = set()
-        merge_records = []
-        for client in selected_clients:
-            # Apply formatting rules to title and street
-            client_record = vars(client)
+    def create_client_record(self):
+        # Apply formatting rules to title and street
+        client_record = vars(self)
 
-            # add client advisor for creation of sub_directories
-            advisors.add(client_record["advisor"])
+        # The MailMerge.merge method from docx-mailmerge strips the whitespace around each mergefield.
+        # In the cases where a client has a title, the format is, for example, <title><first_name> <last_name>
+        # This means that if there is no title, title should be replaced by an empty string, if there is, title
+        # should have a trailing space in order to prevent title being 'together' with first_name, such as
+        # Dr.Jane Doe => Dr. Jane Doe
+        # Therefore, format the first_name field and salutation field (where the same as above occurs).
+        if client_record["title"]:
+            client_record["first_name"] = client_record["title"] + ' ' + client_record["first_name"]
+            client_record["salutation"] += ' ' + client_record["title"]
+            client_record["title"] = ''
 
-            # The MailMerge.merge method from docx-mailmerge strips the whitespace around each mergefield.
-            # In the cases where a client has a title, the format is, for example, <title><first_name> <last_name>
-            # This means that if there is no title, title should be replaced by an empty string, if there is, title
-            # should have a trailing space in order to prevent title being 'together' with first_name, such as
-            # Dr.Jane Doe => Dr. Jane Doe
-            # Therefore, format the first_name field and salutation field (where the same as above occurs).
-            if client_record["title"]:
-                client_record["first_name"] = client_record["title"] + ' ' + client_record["first_name"]
-                client_record["salutation"] += ' ' + client_record["title"]
-                client_record["title"] = ''
+        client_record["address_mailing_street"] += '\n'
+        client_record["amount"] = format(client_record["amount"], ",.2f")
 
-            client_record["address_mailing_street"] += '\n'
-            client_record["amount"] = format(client_record["amount"], ",.2f")
+        # translate client attributes to match excel version, thus, matching the word mergefield placeholders
+        client_record = translate_dict(client_record, FIELD_MAP_CLIENTS, reverse=True)
+        client_record = {key: str(value) for key, value in client_record.items()}  # cast to str for MailMerge
+        
+        return client_record
 
-            # translate client attributes to match excel version, thus, matching the word mergefield placeholders
-            client_record = translate_dict(client_record, FIELD_MAP_CLIENTS, reverse=True)
-            client_record = {key: str(value) for key, value in client_record.items()}  # cast to str for MailMerge
 
-            merge_records.append(client_record)
-
-        return merge_records, advisors
 
 if __name__ == "__main__":
 

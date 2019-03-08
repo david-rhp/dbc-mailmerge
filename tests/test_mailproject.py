@@ -120,7 +120,8 @@ class TestMailProject:
         selection_criteria = {"amount": lambda x: bool(x)}
         selected_clients = project.select_clients(selection_criteria)
 
-        project.create_client_documents(selected_clients)
+        templates = ["../data/templates/cover_letter.docx", "../data/templates/subscription_agreement.docx"]
+        project.create_client_documents(selected_clients, templates)
 
         pass
 
