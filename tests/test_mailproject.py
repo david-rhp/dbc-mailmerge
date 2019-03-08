@@ -1,4 +1,4 @@
-import pandas as pd  # used for testing the __repr__ of MailProject
+from pathlib import Path
 from dbcmailmerge.mailproject import MailProject, Client
 from dbcmailmerge.fieldmap import FIELD_MAP_PROJECT, FIELD_MAP_CLIENTS
 from tests.test_constants import TEST_PROJECT_SINGLE_1, TEST_PROJECT_SINGLE_2, TEST_PROJECT_MULTIPLE, \
@@ -121,9 +121,21 @@ class TestMailProject:
         selected_clients = project.select_clients(selection_criteria)
 
         templates = ["../data/templates/cover_letter.docx", "../data/templates/subscription_agreement.docx"]
-        project.create_client_documents(selected_clients, templates)
+
+        templates = {"offer_documents": ["../data/templates/cover_letter.docx",
+                                         "../data/templates/subscription_agreement.docx"],
+                     "appropriateness_test": ["../data/templates/appropriateness_test.docx"]}
+
+        include_standards = {"offer_documents": True, "appropriateness_test": False}
+
+
+        hierarchy_root = Path('../tests/')
+        standard_pdfs = ["../data/pib.pdf", "../data/factsheet.pdf"]
+
+        project.create_client_documents(selected_clients, templates, include_standards, hierarchy_root, standard_pdfs)
 
         pass
+
 
 class TestClient():
     def test_eq_operator(self):

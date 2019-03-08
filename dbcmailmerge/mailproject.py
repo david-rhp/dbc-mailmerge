@@ -11,6 +11,7 @@ from .docx2pdfconverter import convert_to
 class MailProject:
     TOP_LEVEL_DIR = "client_correspondence"  # name of directory where the created documents should be stored
     DOCUMENT_TYPES = ["offer_documents", "appropriateness_test"]
+
     def __init__(self, project_id, project_name, date_issuance, date_maturity, coupon_rate, commercial_register_number,
                  issue_volume_min, issue_volume_max, collateral_string, clients=None):
         # Core data
@@ -91,7 +92,7 @@ class MailProject:
 
         return project_record
     
-    def create_client_documents(self, selected_clients, templates):
+    def create_client_documents(self, selected_clients, templates, include_standards, hierarchy_root, standard_pdfs):
         project_record = self.create_project_record()
         advisors = set()
         merge_records = []
@@ -106,62 +107,61 @@ class MailProject:
 
             merge_records.append(client_record)
 
-
-        hierarchy_root = Path('../tests/')
-        standard_pdfs = ["../data/pib.pdf", "../data/factsheet.pdf"]
-
         # create folder hierarchy for the storage of the created documents
         sub_directories = [list(advisors), type(self).DOCUMENT_TYPES]
         create_folder_hierarchy(hierarchy_root, type(self).TOP_LEVEL_DIR, sub_directories)
 
         for client_record in merge_records:
-            self.create_client_document(client_record, templates, standard_pdfs, hierarchy_root)
+            self.create_client_document(client_record, templates, standard_pdfs, include_standards, hierarchy_root)
 
-    def create_client_document(self, client_record, templates, standard_pdfs, hierarchy_root):
-        doc_type = "offer_documents"
+    def create_client_document(self, client_record, templates, standard_pdfs, include_standards, hierarchy_root):
 
-        created_documents_paths = []
 
         # copy word template and replace placeholders with client instance data and project data
-        for template_path in templates:
-            with MailMerge(template_path) as document:
-                document.merge(**client_record)
+        for doc_type in templates.keys():
+            created_documents_paths = []
+            for template_path in templates[doc_type]:
+                with MailMerge(template_path) as document:
+                    document.merge(**client_record)
 
-                out_path = (hierarchy_root
-                            / type(self).TOP_LEVEL_DIR
-                            / client_record[FIELD_MAP_CLIENTS_REVERSED["advisor"]]
-                            / doc_type)
+                    out_path = (hierarchy_root
+                                / type(self).TOP_LEVEL_DIR
+                                / client_record[FIELD_MAP_CLIENTS_REVERSED["advisor"]]
+                                / doc_type)
 
-                template_name = template_path.split('/')[-1].replace(".docx", '')
+                    template_name = template_path.split('/')[-1].replace(".docx", '')
 
-                filename = ("Nr._"
-                            + str(self.project_id)
-                            + '_'
-                            + client_record[FIELD_MAP_CLIENTS_REVERSED["last_name"]]
-                            + '_'
-                            + client_record[FIELD_MAP_CLIENTS_REVERSED["first_name"]]
-                            + '_'
-                            + client_record[FIELD_MAP_CLIENTS_REVERSED["client_id"]]).replace(' ', '_')
+                    filename = ("Nr._"
+                                + str(self.project_id)
+                                + '_'
+                                + client_record[FIELD_MAP_CLIENTS_REVERSED["last_name"]]
+                                + '_'
+                                + client_record[FIELD_MAP_CLIENTS_REVERSED["first_name"]]
+                                + '_'
+                                + client_record[FIELD_MAP_CLIENTS_REVERSED["client_id"]]).replace(' ', '_')
 
-                out_path_full = out_path / (filename + '_' + template_name + ".docx")
+                    out_path_full = out_path / (filename + '_' + template_name + ".docx")
 
-                # TODO Bottleneck here, file is written, read, converted, saved, deleted. Conversion takes long
-                # save document in folder hierarchy
-                document.write(out_path_full)
-                convert_to(out_path, out_path_full)
-                os.remove(out_path_full)
+                    # TODO Bottleneck here, file is written, read, converted, saved, deleted. Conversion takes long
+                    # save document in folder hierarchy
+                    document.write(out_path_full)
+                    convert_to(out_path, out_path_full)
+                    os.remove(out_path_full)
 
-                created_documents_paths.append(out_path_full.with_suffix('.pdf'))  # replace docx with pdf
+                    created_documents_paths.append(out_path_full.with_suffix('.pdf'))  # replace docx with pdf
 
-
-        self.merge_pdfs_and_remove(created_documents_paths, standard_pdfs, out_path, filename)
+            self.merge_pdfs_and_remove(created_documents_paths, standard_pdfs, out_path, filename,
+                                       include_standards[doc_type])
 
     @staticmethod
-    def merge_pdfs_and_remove(customized_documents, standard_pdfs, out_path, filename):
+    def merge_pdfs_and_remove(customized_documents, standard_pdfs,out_path, filename, include_standards=False):
         merger = PdfFileMerger()
 
         all_documents = customized_documents.copy()
-        all_documents.extend(standard_pdfs)
+
+        if include_standards:
+            all_documents.extend(standard_pdfs)
+
         for document in all_documents:
             # The reference to the file descriptor is reassigned in each loop, but a reference to each
             # descriptor is kept in the merger object. The descriptors are closed at the end when
@@ -262,18 +262,3 @@ class Client:
         client_record = {key: str(value) for key, value in client_record.items()}  # cast to str for MailMerge
         
         return client_record
-
-
-
-if __name__ == "__main__":
-
-
-    path = filedialog.askopenfilename()
-    project = MailProject("151", "Some Project Name")
-    print(project)
-    print(vars(project))
-
-
-    #project.create_clients()
-    #print(project.client_list)
-    #print(dir(project.client_list[0]))
