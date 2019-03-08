@@ -22,6 +22,8 @@ FIELD_MAP_CLIENTS = {"db_id": "client_id",
                      "depot_nummer": "depot_no",
                      "depot_bic": "depot_bic"}
 
+FIELD_MAP_CLIENTS_REVERSED = {value: key for key, value in FIELD_MAP_CLIENTS.items()}
+
 FIELD_MAP_PROJECT = {"projektnummer": "project_id",
                      "projektname": "project_name",
 

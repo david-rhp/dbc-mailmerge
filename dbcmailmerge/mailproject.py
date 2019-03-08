@@ -3,9 +3,10 @@ from tkinter import filedialog
 from .utility import mailmerge_factory, translate_dict, create_folder_hierarchy
 from pathlib import Path
 from mailmerge import MailMerge
-from PyPDF2 import PdfFileMerger, PdfFileReader, PdfFileWriter
-from dbcmailmerge.fieldmap import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
+from PyPDF2 import PdfFileMerger
+from dbcmailmerge.fieldmap import FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, FIELD_MAP_PROJECT
 from .docx2pdfconverter import convert_to
+
 
 class MailProject:
     TOP_LEVEL_DIR = "client_correspondence"  # name of directory where the created documents should be stored
@@ -105,73 +106,77 @@ class MailProject:
 
             merge_records.append(client_record)
 
+
         hierarchy_root = Path('../tests/')
-        doc_type = "offer_documents"
+        standard_pdfs = ["../data/pib.pdf", "../data/factsheet.pdf"]
 
         # create folder hierarchy for the storage of the created documents
         sub_directories = [list(advisors), type(self).DOCUMENT_TYPES]
         create_folder_hierarchy(hierarchy_root, type(self).TOP_LEVEL_DIR, sub_directories)
 
-        reversed_field_map_clients = {value: key for key, value in FIELD_MAP_CLIENTS.items()}
-
         for client_record in merge_records:
-            created_documents_paths = []
+            self.create_client_document(client_record, templates, standard_pdfs, hierarchy_root)
 
-            # copy word template and replace placeholders with client instance data and project data
-            for template_path in templates:
-                with MailMerge(template_path) as document:
-                    document.merge(**client_record)
+    def create_client_document(self, client_record, templates, standard_pdfs, hierarchy_root):
+        doc_type = "offer_documents"
 
-                    out_path = (hierarchy_root
-                                / type(self).TOP_LEVEL_DIR
-                                / client_record[reversed_field_map_clients["advisor"]]
-                                / doc_type)
+        created_documents_paths = []
 
-                    template_name = template_path.split('/')[-1].replace(".docx", '')
+        # copy word template and replace placeholders with client instance data and project data
+        for template_path in templates:
+            with MailMerge(template_path) as document:
+                document.merge(**client_record)
 
-                    filename = ("Nr._"
-                                + str(self.project_id)
-                                + '_'
-                                + client_record[reversed_field_map_clients["last_name"]]
-                                + '_'
-                                + client_record[reversed_field_map_clients["first_name"]]
-                                + '_'
-                                + client_record[reversed_field_map_clients["client_id"]]).replace(' ', '_')
+                out_path = (hierarchy_root
+                            / type(self).TOP_LEVEL_DIR
+                            / client_record[FIELD_MAP_CLIENTS_REVERSED["advisor"]]
+                            / doc_type)
 
-                    out_path_full = out_path / (filename + '_' + template_name + ".docx")
+                template_name = template_path.split('/')[-1].replace(".docx", '')
 
-                    # TODO Bottleneck here, file is written, read, converted, saved, delted. Conversion takes long
-                    # save document in folder hierarchy
-                    document.write(out_path_full)
-                    convert_to(out_path, out_path_full)
-                    os.remove(out_path_full)
+                filename = ("Nr._"
+                            + str(self.project_id)
+                            + '_'
+                            + client_record[FIELD_MAP_CLIENTS_REVERSED["last_name"]]
+                            + '_'
+                            + client_record[FIELD_MAP_CLIENTS_REVERSED["first_name"]]
+                            + '_'
+                            + client_record[FIELD_MAP_CLIENTS_REVERSED["client_id"]]).replace(' ', '_')
 
-                    created_documents_paths.append(out_path_full.with_suffix('.pdf'))  # replace docx with pdf
+                out_path_full = out_path / (filename + '_' + template_name + ".docx")
 
+                # TODO Bottleneck here, file is written, read, converted, saved, deleted. Conversion takes long
+                # save document in folder hierarchy
+                document.write(out_path_full)
+                convert_to(out_path, out_path_full)
+                os.remove(out_path_full)
 
-                writer = PdfFileWriter()
-                created_documents_paths = ['../data/factsheet.pdf', '../data/pib.pdf']
-                for created_document in created_documents_paths:
-                    with open(created_document, "rb") as in_pdf:
-                        reader = PdfFileReader(in_pdf)
-
-                        for page_num in range(reader.numPages):
-                            page = reader.getPage(page_num)
-                            writer.addPage(page)
-
-                with open(out_path / (filename + ".pdf"), "wb") as out_pdf:
-                    writer.write(out_pdf)
+                created_documents_paths.append(out_path_full.with_suffix('.pdf'))  # replace docx with pdf
 
 
-                # merger = PdfFileMerger()
-                # for created_document in created_documents_paths:
-                #     with open(created_document, "rb") as in_pdf:
-                #         merger.append(in_pdf)
-                #
-                # with open(out_path / (filename + ".pdf"), "wb") as out_pdf:
-                #     merger.write(out_pdf)
-                #     merger.close()
+        self.merge_pdfs_and_remove(created_documents_paths, standard_pdfs, out_path, filename)
 
+    @staticmethod
+    def merge_pdfs_and_remove(customized_documents, standard_pdfs, out_path, filename):
+        merger = PdfFileMerger()
+
+        all_documents = customized_documents.copy()
+        all_documents.extend(standard_pdfs)
+        for document in all_documents:
+            # The reference to the file descriptor is reassigned in each loop, but a reference to each
+            # descriptor is kept in the merger object. The descriptors are closed at the end when
+            # merger.close() is called
+            # See: https://pythonhosted.org/PyPDF2/PdfFileMerger.html
+            in_pdf = open(document, "rb")
+            merger.append(in_pdf)
+
+        with open(out_path / (filename + ".pdf"), "wb") as out_pdf:
+            merger.write(out_pdf)
+            merger.close()  # closes all file descriptors (input and output)
+
+        # delete old in_pdfs
+        for document in customized_documents:
+            os.remove(document)
 
 class Client:
     def __init__(self, client_id, advisor, title, first_name, last_name, salutation_address_field, salutation,
