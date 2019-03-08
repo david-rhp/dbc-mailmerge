@@ -27,7 +27,6 @@ def prompt_str(prompt="Please enter a value or type `q` or `quit` to abort"):
             return value
 
 
-
 def prompt_data_source(data_kind, prompt_source_file=True, prompt_sheet_name=True):
     data_source = None
     if prompt_source_file:
@@ -179,10 +178,13 @@ if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw()
 
+    # Obtain location from the user for saving the documents
+    # The folder structure is saved as a constant, and is determined by the business need
     messagebox.showinfo("Select Directory", "Select the directory where you want to save the created documents.")
     hierarchy_root = Path(filedialog.askdirectory())
     root.update()
 
+    # Get data source, currently 1 excel sheet per project including both the client and the project data
     data_source, _ = prompt_data_source("client", prompt_sheet_name=False)
 
     project = create_project_or_clients(data_source, "project")

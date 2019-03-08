@@ -2,7 +2,8 @@ import os
 from .utility import mailmerge_factory, translate_dict, create_folder_hierarchy
 from mailmerge import MailMerge
 from PyPDF2 import PdfFileMerger
-from dbcmailmerge.constants import FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, FIELD_MAP_PROJECT, TEMPLATES, INCLUDE_STANDARDS
+from dbcmailmerge.constants import (FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, FIELD_MAP_PROJECT, TEMPLATES,
+                                    INCLUDE_STANDARDS)
 from .docx2pdfconverter import convert_to
 
 
@@ -77,7 +78,7 @@ class MailProject:
                 selected_clients.append(client)
 
         return selected_clients
-    
+
     def create_project_record(self):
         # translate project data so that the fields (keys) match the names in the word template
         project_record = vars(self)
@@ -89,7 +90,7 @@ class MailProject:
         project_record = {key: str(value) for key, value in project_record.items()}  # cast to str for MailMerge
 
         return project_record
-    
+
     def create_client_documents(self, selected_clients, hierarchy_root, standard_pdfs):
         project_record = self.create_project_record()
         advisors = set()
@@ -151,7 +152,7 @@ class MailProject:
                                        INCLUDE_STANDARDS[doc_type])
 
     @staticmethod
-    def merge_pdfs_and_remove(customized_documents, standard_pdfs,out_path, filename, include_standards=False):
+    def merge_pdfs_and_remove(customized_documents, standard_pdfs, out_path, filename, include_standards=False):
         merger = PdfFileMerger()
 
         all_documents = customized_documents.copy()
@@ -177,6 +178,8 @@ class MailProject:
 
 
 class Client:
+    AMOUNT_EMPTY_PLACEHOLDER = '_' * 20
+
     def __init__(self, client_id, advisor, title, first_name, last_name, salutation_address_field, salutation,
                  address_mailing_street, address_mailing_zip, address_mailing_city,
                  address_notify_street, address_notify_zip, address_notify_city,
@@ -252,10 +255,15 @@ class Client:
             client_record["title"] = ''
 
         client_record["address_mailing_street"] += '\n'
-        client_record["amount"] = format(client_record["amount"], ",.2f")
+
+        if client_record["amount"]:
+            client_record["amount"] = format(client_record["amount"], ",.2f")
+        else:
+            # if no amount entered in excel, use _ als placeholder for the customer to enter in handwritten form
+            client_record["amount"] = type(self).AMOUNT_EMPTY_PLACEHOLDER
 
         # translate client attributes to match excel version, thus, matching the word mergefield placeholders
         client_record = translate_dict(client_record, FIELD_MAP_CLIENTS, reverse=True)
         client_record = {key: str(value) for key, value in client_record.items()}  # cast to str for MailMerge
-        
+
         return client_record

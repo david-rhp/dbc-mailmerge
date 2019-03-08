@@ -112,16 +112,24 @@ class TestMailProject:
         for client in result:
             assert client.client_id in expected_client_ids
 
-    def test_create_client_documents(self):
+    def test_create_client_documents_with_filter(self, with_filter=True):
         # set up project
         project = MailProject(**TEST_PROJECT_SINGLE_1)
         project.create_clients(TEST_DATA_SOURCE_PATH, "client_data", FIELD_MAP_CLIENTS)
 
-        selection_criteria = {"amount": lambda x: bool(x)}
+        if with_filter:
+            selection_criteria = {"amount": lambda x: bool(x)}
+        else:
+            selection_criteria = {}
+
         selected_clients = project.select_clients(selection_criteria)
 
         project.create_client_documents(selected_clients, HIERARCHY_ROOT, STANDARD_PDFS)
 
+        pass
+
+    def test_create_client_documents_without_filter(self):
+        self.test_create_client_documents_with_filter(with_filter=False)
         pass
 
 
