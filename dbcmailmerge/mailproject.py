@@ -178,6 +178,7 @@ class MailProject:
         for document in customized_documents:
             os.remove(document)
 
+
 class Client:
     def __init__(self, client_id, advisor, title, first_name, last_name, salutation_address_field, salutation,
                  address_mailing_street, address_mailing_zip, address_mailing_city,
