@@ -1,10 +1,11 @@
-import pandas as pd
+import os
 from tkinter import filedialog
 from .utility import mailmerge_factory, translate_dict, create_folder_hierarchy
 from pathlib import Path
 from mailmerge import MailMerge
+from PyPDF2 import PdfFileMerger, PdfFileReader, PdfFileWriter
 from dbcmailmerge.fieldmap import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
-
+from .docx2pdfconverter import convert_to
 
 class MailProject:
     TOP_LEVEL_DIR = "client_correspondence"  # name of directory where the created documents should be stored
@@ -114,6 +115,8 @@ class MailProject:
         reversed_field_map_clients = {value: key for key, value in FIELD_MAP_CLIENTS.items()}
 
         for client_record in merge_records:
+            created_documents_paths = []
+
             # copy word template and replace placeholders with client instance data and project data
             for template_path in templates:
                 with MailMerge(template_path) as document:
@@ -133,12 +136,41 @@ class MailProject:
                                 + '_'
                                 + client_record[reversed_field_map_clients["first_name"]]
                                 + '_'
-                                + client_record[reversed_field_map_clients["client_id"]]
-                                + '_'
-                                + template_name).replace(' ', '_')
+                                + client_record[reversed_field_map_clients["client_id"]]).replace(' ', '_')
 
+                    out_path_full = out_path / (filename + '_' + template_name + ".docx")
+
+                    # TODO Bottleneck here, file is written, read, converted, saved, delted. Conversion takes long
                     # save document in folder hierarchy
-                    document.write(out_path / (filename + ".docx"))
+                    document.write(out_path_full)
+                    convert_to(out_path, out_path_full)
+                    os.remove(out_path_full)
+
+                    created_documents_paths.append(out_path_full.with_suffix('.pdf'))  # replace docx with pdf
+
+
+                writer = PdfFileWriter()
+                created_documents_paths = ['../data/factsheet.pdf', '../data/pib.pdf']
+                for created_document in created_documents_paths:
+                    with open(created_document, "rb") as in_pdf:
+                        reader = PdfFileReader(in_pdf)
+
+                        for page_num in range(reader.numPages):
+                            page = reader.getPage(page_num)
+                            writer.addPage(page)
+
+                with open(out_path / (filename + ".pdf"), "wb") as out_pdf:
+                    writer.write(out_pdf)
+
+
+                # merger = PdfFileMerger()
+                # for created_document in created_documents_paths:
+                #     with open(created_document, "rb") as in_pdf:
+                #         merger.append(in_pdf)
+                #
+                # with open(out_path / (filename + ".pdf"), "wb") as out_pdf:
+                #     merger.write(out_pdf)
+                #     merger.close()
 
 
 class Client:
