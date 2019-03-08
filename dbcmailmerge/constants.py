@@ -1,9 +1,11 @@
+from pathlib import Path
+
 # Document Templates
 ####################
 
-TEMPLATES = {"offer_documents": ["../data/templates/cover_letter.docx",
-                                 "../data/templates/subscription_agreement.docx"],
-             "appropriateness_test": ["../data/templates/appropriateness_test.docx"]}
+TEMPLATES = {"offer_documents": [Path("../data/templates/cover_letter.docx").absolute(),
+                                 Path("../data/templates/subscription_agreement.docx").absolute()],
+             "appropriateness_test": [Path("../data/templates/appropriateness_test.docx").absolute()]}
 
 INCLUDE_STANDARDS = {"offer_documents": True, "appropriateness_test": False}
 

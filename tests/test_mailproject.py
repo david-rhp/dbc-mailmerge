@@ -1,9 +1,8 @@
-from pathlib import Path
 from dbcmailmerge.mailproject import MailProject, Client
 from tests.test_constants import (HIERARCHY_ROOT, STANDARD_PDFS, TEST_DATA_SOURCE_PATH,
                                   TEST_PROJECT_SINGLE_1, TEST_PROJECT_SINGLE_2, TEST_PROJECT_MULTIPLE,
                                   TEST_CLIENT_1, TEST_CLIENT_2, TEST_CLIENT_MULTIPLE)
-from dbcmailmerge.constants import TEMPLATES, FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT, INCLUDE_STANDARDS
+from dbcmailmerge.constants import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
 
 
 class TestMailProject:
@@ -121,7 +120,7 @@ class TestMailProject:
         selection_criteria = {"amount": lambda x: bool(x)}
         selected_clients = project.select_clients(selection_criteria)
 
-        project.create_client_documents(selected_clients, TEMPLATES, INCLUDE_STANDARDS, HIERARCHY_ROOT, STANDARD_PDFS)
+        project.create_client_documents(selected_clients, HIERARCHY_ROOT, STANDARD_PDFS)
 
         pass
 

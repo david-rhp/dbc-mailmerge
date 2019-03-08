@@ -1,10 +1,8 @@
 import os
-from tkinter import filedialog
 from .utility import mailmerge_factory, translate_dict, create_folder_hierarchy
-from pathlib import Path
 from mailmerge import MailMerge
 from PyPDF2 import PdfFileMerger
-from dbcmailmerge.constants import FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, FIELD_MAP_PROJECT
+from dbcmailmerge.constants import FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, FIELD_MAP_PROJECT, TEMPLATES, INCLUDE_STANDARDS
 from .docx2pdfconverter import convert_to
 
 
@@ -92,7 +90,7 @@ class MailProject:
 
         return project_record
     
-    def create_client_documents(self, selected_clients, templates, include_standards, hierarchy_root, standard_pdfs):
+    def create_client_documents(self, selected_clients, hierarchy_root, standard_pdfs):
         project_record = self.create_project_record()
         advisors = set()
         merge_records = []
@@ -112,15 +110,13 @@ class MailProject:
         create_folder_hierarchy(hierarchy_root, type(self).TOP_LEVEL_DIR, sub_directories)
 
         for client_record in merge_records:
-            self.create_client_document(client_record, templates, standard_pdfs, include_standards, hierarchy_root)
+            self.create_client_document(client_record, standard_pdfs, hierarchy_root)
 
-    def create_client_document(self, client_record, templates, standard_pdfs, include_standards, hierarchy_root):
-
-
+    def create_client_document(self, client_record, standard_pdfs, hierarchy_root):
         # copy word template and replace placeholders with client instance data and project data
-        for doc_type in templates.keys():
+        for doc_type in TEMPLATES.keys():
             created_documents_paths = []
-            for template_path in templates[doc_type]:
+            for template_path in TEMPLATES[doc_type]:
                 with MailMerge(template_path) as document:
                     document.merge(**client_record)
 
@@ -129,7 +125,8 @@ class MailProject:
                                 / client_record[FIELD_MAP_CLIENTS_REVERSED["advisor"]]
                                 / doc_type)
 
-                    template_name = template_path.split('/')[-1].replace(".docx", '')
+                    # template_name = template_path.split('/')[-1].replace(".docx", '')
+                    template_name = template_path.parts[-1].replace(".docx", '')
 
                     filename = ("Nr._"
                                 + str(self.project_id)
@@ -151,7 +148,7 @@ class MailProject:
                     created_documents_paths.append(out_path_full.with_suffix('.pdf'))  # replace docx with pdf
 
             self.merge_pdfs_and_remove(created_documents_paths, standard_pdfs, out_path, filename,
-                                       include_standards[doc_type])
+                                       INCLUDE_STANDARDS[doc_type])
 
     @staticmethod
     def merge_pdfs_and_remove(customized_documents, standard_pdfs,out_path, filename, include_standards=False):

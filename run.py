@@ -1,7 +1,9 @@
 from tkinter import filedialog
 from dbcmailmerge.mailproject import MailProject
-from dbcmailmerge.constants import FIELD_MAP_PROJECT, TEMPLATES, INCLUDE_STANDARDS
+from dbcmailmerge.constants import FIELD_MAP_PROJECT, FIELD_MAP_CLIENTS, INCLUDE_STANDARDS
 import sys
+from pathlib import Path
+from xlrd import XLRDError
 
 import tkinter as tk
 from tkinter import messagebox
@@ -26,14 +28,16 @@ def prompt_str(prompt="Please enter a value or type `q` or `quit` to abort"):
 
 
 
-def prompt_data_source(data_kind, prompt_source_file=True):
+def prompt_data_source(data_kind, prompt_source_file=True, prompt_sheet_name=True):
     data_source = None
     if prompt_source_file:
         messagebox.showinfo("Select Data Source", "Select the data source for the project and the respective clients.")
         data_source = filedialog.askopenfilename()
         root.update()
 
-    sheet_name = prompt_str(f"Please provide the sheet_name of the {data_kind} data source")
+    sheet_name = None
+    if prompt_sheet_name:
+        sheet_name = prompt_str(f"Please provide the sheet_name of the {data_kind} data source")
 
     return data_source, sheet_name
 
@@ -111,12 +115,11 @@ def prompt_int(prompt="Please enter one integer"):
 
 def print_dictionary(dictionary):
     for key in dictionary:
-        print(f"Option {key[0]}: {dictionary[key[0]]}")
+        print(f"Option {key}: {dictionary[key][0]}")
 
 
 def select_filter():
-    selection = 0
-
+    selection = None
 
     filters = {"amount": lambda x: bool(x)}
 
@@ -155,6 +158,20 @@ def prompt_files():
             return selected_files
 
 
+def create_project_or_clients(data_source, data_kind, project_object=None):
+    while True:
+        _, data_sheet_name = prompt_data_source(data_kind, prompt_source_file=False)
+        try:
+            if project_object:
+                project_object.create_clients(data_source, data_sheet_name, FIELD_MAP_CLIENTS)
+            else:
+                project_object = MailProject.from_excel(data_source, data_sheet_name, FIELD_MAP_PROJECT)
+        except XLRDError:
+            print(f"Couldn't find the sheet name you specified for {data_kind} data, please try again.\n")
+        else:
+            break
+
+    return project_object
 
 
 if __name__ == "__main__":
@@ -163,21 +180,17 @@ if __name__ == "__main__":
     root.withdraw()
 
     messagebox.showinfo("Select Directory", "Select the directory where you want to save the created documents.")
-    hierarchy_root = filedialog.askdirectory()
+    hierarchy_root = Path(filedialog.askdirectory())
     root.update()
 
-    data_source, client_data_sheet_name = prompt_data_source("client")
-    _, project_data_sheet_name = prompt_data_source("project", False)
+    data_source, _ = prompt_data_source("client", prompt_sheet_name=False)
 
-    project = MailProject.from_excel(data_source, project_data_sheet_name, FIELD_MAP_PROJECT)
+    project = create_project_or_clients(data_source, "project")
+    project = create_project_or_clients(data_source, "client", project)
 
-    # Select clients based on a filter, at least one has to be chosen
     selection_criteria = select_filter()
     selected_clients = project.select_clients(selection_criteria)
 
     standard_pdfs = prompt_files()
-
-    root.destroy()
-
     # Create documents and merge
-    project.create_client_documents(selected_clients, TEMPLATES, INCLUDE_STANDARDS, hierarchy_root, standard_pdfs)
+    project.create_client_documents(selected_clients, INCLUDE_STANDARDS, hierarchy_root, standard_pdfs)
