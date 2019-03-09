@@ -13,8 +13,8 @@ from mailmerge import MailMerge
 from PyPDF2 import PdfFileMerger
 from dbcmailmerge.config import (FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, FIELD_MAP_PROJECT,
                                  TEMPLATES, INCLUDE_STANDARDS, CONVERSION_MAP)
-from .utility import translate_dict, create_folder_hierarchy, parse_excel
-from .docx2pdfconverter import convert_to
+from dbcmailmerge.utility import  translate_dict, create_folder_hierarchy, parse_excel
+from dbcmailmerge.docx2pdfconverter import convert_to
 
 
 class MailProject:
