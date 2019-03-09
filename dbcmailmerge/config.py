@@ -5,7 +5,7 @@ Constants
 ---------
 TEMPLATES : dict
     Contains doc_type, [template_paths] pairs.
-    Add/remove templates that should be used for creating customized documents per clients. Currently, each template
+    Add/remove templates that should be used for creating customized documents per client_records. Currently, each template
     in TEMPLATES will be used for creating the documents. Each template needs to have a corresponding doc_type (key),
     which will be used to create folders for each doc_type. The documents created on the basis of a template,
     will be saved in their corresponding folder

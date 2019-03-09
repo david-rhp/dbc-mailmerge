@@ -11,7 +11,7 @@ from mailmerge import MailMerge
 from PyPDF2 import PdfFileMerger
 from dbcmailmerge.config import (FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, FIELD_MAP_PROJECT,
                                  TEMPLATES, INCLUDE_STANDARDS)
-from .utility import mailmerge_factory, translate_dict, create_folder_hierarchy
+from .utility import mailmerge_factory, translate_dict, create_folder_hierarchy, parse_excel
 from .docx2pdfconverter import convert_to
 
 
@@ -20,7 +20,7 @@ class MailProject:
     DOCUMENT_TYPES = ["offer_documents", "appropriateness_test"]
 
     def __init__(self, project_id, project_name, date_issuance, date_maturity, coupon_rate, commercial_register_number,
-                 issue_volume_min, issue_volume_max, collateral_string, clients=None):
+                 issue_volume_min, issue_volume_max, collateral_string, client_records=None):
         # Core data
         self.project_id = project_id
         self.project_name = project_name
@@ -33,8 +33,8 @@ class MailProject:
         self.issue_volume_max = issue_volume_max
         self.collateral_string = collateral_string
 
-        if clients is None:
-            self.clients = []
+        if client_records is None:
+            self.client_records = []
 
     def __repr__(self):
         # Make sure that pd.Timestamp object gets created when using this string
@@ -62,24 +62,54 @@ class MailProject:
     def from_excel(cls, project_data_path, project_data_sheet_name, project_field_map):
         return mailmerge_factory(cls, project_data_path, project_data_sheet_name, project_field_map)
 
-    def create_clients(self, client_data_path, client_data_sheet_name, client_field_map):
+    def create_client_records(self, client_data_path, client_data_sheet_name, client_field_map):
         # obtain DataFrame with only the columns of field_maps.keys()
-        clients = mailmerge_factory(Client, client_data_path, client_data_sheet_name, client_field_map)
+        df = parse_excel(client_data_path, client_data_sheet_name, client_field_map)
 
-        if self.clients:
-            # prevent override of the clients stored in the MailProject instance.
+        client_records = []
+        for _, record in df.iterrows():
+            # Convert pandas series to dict for translation of excel column names to the version used internally
+            record = record.to_dict()
+            record = translate_dict(record, client_field_map)
+
+            client_records.append(record)
+
+        if self.client_records:
+            # prevent override of the client_records stored in the MailProject instance.
             raise ValueError("At least one client has already been added to this project.")
         else:
-            self.clients.extend(clients)
+            self.client_records = client_records
+
+        self.cast_client_records(True)
+
+    def cast_client_records(self, silent=False):
+        CONVERSION_MAP = {"client_id": str, "amount": int, "depot_no": str, "depot_bic": str, "address_mailing_zip": str,
+                          "address_notify_zip": str}
+
+        for record in self.client_records:
+            for key in CONVERSION_MAP:
+                conversion_function = CONVERSION_MAP[key]
+                try:
+                    record[key] = conversion_function(record[key])
+                except ValueError as err:
+                    # Conversion failed
+                    if not silent:
+                        raise ValueError(err,
+                                         "The conversion didn't work. Probably due to the value in the data source"
+                                         "having an incompatible type with the conversion function in the "
+                                         "CONVERSION MAP")
+                    else:
+                        # don't change the value of the current record.
+                        pass
 
     def select_clients(self, selection_criteria):
-        # select only relevant clients
+        # select only relevant client_records
         selected_clients = []
-        for client in self.clients:
+        for client in self.client_records:
             selected = True
 
             for criterion in selection_criteria.keys():
-                if not selection_criteria[criterion](getattr(client, criterion)):
+                if not selection_criteria[criterion](client[criterion]):
                     selected = False
 
             if selected:
@@ -90,7 +120,7 @@ class MailProject:
     def create_project_record(self):
         # translate project data so that the fields (keys) match the names in the word template
         project_record = vars(self)
-        del project_record["clients"]  # not part of the fields in the template
+        del project_record["client_records"]  # not part of the fields in the template
 
         # convert coupon rate from decimal to percentage and use German comma
         project_record["coupon_rate"] = format(float(project_record["coupon_rate"]) * 100, ".2f").replace('.', ',')
@@ -101,14 +131,15 @@ class MailProject:
 
     def create_client_documents(self, selected_clients, hierarchy_root, standard_pdfs):
         project_record = self.create_project_record()
+
         advisors = set()
         merge_records = []
-        for client in selected_clients:
+        for client_record in selected_clients:
             # add client advisor for creation of sub_directories
-            advisors.add(client.advisor)
+            advisors.add(client_record["advisor"])
 
-            client_record = client.create_client_record()
-
+            # translate client to match placeholders in word
+            client_record = translate_dict(client_record, FIELD_MAP_CLIENTS, reverse=True)
             # add project data
             client_record.update(project_record)
 
@@ -183,95 +214,3 @@ class MailProject:
         # delete old in_pdfs
         for document in customized_documents:
             os.remove(document)
-
-
-class Client:
-    AMOUNT_EMPTY_PLACEHOLDER = '_' * 20
-
-    def __init__(self, client_id, advisor, title, first_name, last_name, salutation_address_field, salutation,
-                 address_mailing_street, address_mailing_zip, address_mailing_city,
-                 address_notify_street, address_notify_zip, address_notify_city,
-                 amount, subscription_am_authorized, mailing_as_email, depot_no, depot_bic):
-        # Core data - client specific
-        self.client_id = client_id
-
-        self.advisor = advisor
-        self.title = title
-        self.first_name = first_name
-        self.last_name = last_name
-        self.salutation_address_field = salutation_address_field
-        self.salutation = salutation
-
-        # Addresses for mailing - client specific
-        self.address_mailing_street = address_mailing_street
-        self.address_mailing_zip = str(address_mailing_zip)
-        self.address_mailing_city = address_mailing_city
-        self.address_notify_street = address_notify_street
-        self.address_notify_zip = str(address_notify_zip)
-        self.address_notify_city = address_notify_city
-
-        # Data pertaining to an individual bond subscription
-        # always an int or empty >= 0 in 5k increments, excel sometimes returns floats
-        self.amount = int(amount) if amount else amount
-        self.subscription_am_authorized = subscription_am_authorized
-        self.mailing_as_email = mailing_as_email
-        self.depot_no = str(depot_no)
-        self.depot_bic = str(depot_bic)
-
-    def __repr__(self):
-        # Watch out for data types. Strings are enclosed by '' (e.g., first_name), while numerics are not
-        # (e.g., client_id)
-        return (f"Client({self.client_id}, "
-                f"'{self.advisor}', "
-                f"'{self.title}', "
-                f"'{self.first_name}', "
-                f"'{self.last_name}', "
-                f"'{self.salutation_address_field}', "
-                f"'{self.salutation}', "
-                f"'{self.address_mailing_street}', "
-                f"'{self.address_mailing_zip}', "
-                f"'{self.address_mailing_city}', "
-                f"'{self.address_notify_street}', "
-                f"'{self.address_notify_zip}', "
-                f"'{self.address_notify_city}', "
-                f"{self.amount}, "
-                f"{self.subscription_am_authorized}, "
-                f"{self.mailing_as_email}, "
-                f"'{self.depot_no}', "
-                f"'{self.depot_bic}')")
-
-    def __str__(self):
-        return f"Client ID ({self.client_id}): {self.first_name}, {self.last_name}"
-
-    def __eq__(self, other):
-        # Assumption: two projects are the same if their attributes are the same.
-        return vars(self) == vars(other)
-
-    def create_client_record(self):
-        # Apply formatting rules to title and street
-        client_record = vars(self)
-
-        # The MailMerge.merge method from docx-mailmerge strips the whitespace around each mergefield.
-        # In the cases where a client has a title, the format is, for example, <title><first_name> <last_name>
-        # This means that if there is no title, title should be replaced by an empty string, if there is, title
-        # should have a trailing space in order to prevent title being 'together' with first_name, such as
-        # Dr.Jane Doe => Dr. Jane Doe
-        # Therefore, format the first_name field and salutation field (where the same as above occurs).
-        if client_record["title"]:
-            client_record["first_name"] = client_record["title"] + ' ' + client_record["first_name"]
-            client_record["salutation"] += ' ' + client_record["title"]
-            client_record["title"] = ''
-
-        client_record["address_mailing_street"] += '\n'
-
-        if client_record["amount"]:
-            client_record["amount"] = format(client_record["amount"], ",.2f")
-        else:
-            # if no amount entered in excel, use _ als placeholder for the customer to enter in handwritten form
-            client_record["amount"] = type(self).AMOUNT_EMPTY_PLACEHOLDER
-
-        # translate client attributes to match excel version, thus, matching the word mergefield placeholders
-        client_record = translate_dict(client_record, FIELD_MAP_CLIENTS, reverse=True)
-        client_record = {key: str(value) for key, value in client_record.items()}  # cast to str for MailMerge
-
-        return client_record

@@ -76,7 +76,7 @@ def prompt_data_source(data_kind, prompt_source_file=True, prompt_sheet_name=Tru
     """
     data_source = None
     if prompt_source_file:
-        messagebox.showinfo("Select Data Source", "Select the data source for the project and the respective clients.")
+        messagebox.showinfo("Select Data Source", "Select the data source for the project and the respective client_records.")
         data_source = filedialog.askopenfilename()
         root.update()
 
@@ -215,7 +215,7 @@ def create_project_and_clients(data_source, data_kind=("project", "client"), pro
         For which data categories the user should provide the excel sheet names for (default: project, client).
 
     project_object : MailProject or None, optional
-        The project_object for which the clients should be created. None is used when no project instance has been
+        The project_object for which the client_records should be created. None is used when no project instance has been
         instantiated.
 
     counter : int, optional
@@ -225,13 +225,13 @@ def create_project_and_clients(data_source, data_kind=("project", "client"), pro
     Returns
     -------
     project_object :
-        The created MailProject instance with instantiated clients.
+        The created MailProject instance with instantiated client_records.
     """
     while True:
         _, data_sheet_name = prompt_data_source(data_kind[counter], prompt_source_file=False)
         try:
             if project_object:
-                project_object.create_clients(data_source, data_sheet_name, FIELD_MAP_CLIENTS)
+                project_object.create_client_records(data_source, data_sheet_name, FIELD_MAP_CLIENTS)
             else:
                 project_object = MailProject.from_excel(data_source, data_sheet_name, FIELD_MAP_PROJECT)
         except XLRDError:

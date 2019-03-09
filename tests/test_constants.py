@@ -40,7 +40,7 @@ TEST_PROJECT_SINGLE_2 = {"project_id": 178,
 TEST_PROJECT_MULTIPLE = [TEST_PROJECT_SINGLE_1, TEST_PROJECT_SINGLE_2]
 
 
-TEST_CLIENT_1 = {"client_id": 1,
+TEST_CLIENT_1 = {"client_id": '1',
                  "title": "",
                  "advisor": "Betreuer 1",
                  "first_name": "John1",
@@ -61,7 +61,7 @@ TEST_CLIENT_1 = {"client_id": 1,
                  "depot_no": "123456789",
                  "depot_bic": "SOMEALPHANUMERICSTRING"}
 
-TEST_CLIENT_2 = {"client_id": 4,
+TEST_CLIENT_2 = {"client_id": '4',
                  "advisor": "Betreuer 2",
                  "title": "Dr.",
                  "first_name": "Jane4",
