@@ -2,7 +2,7 @@ from dbcmailmerge.mailproject import MailProject, Client
 from tests.test_constants import (HIERARCHY_ROOT, STANDARD_PDFS, TEST_DATA_SOURCE_PATH,
                                   TEST_PROJECT_SINGLE_1, TEST_PROJECT_SINGLE_2, TEST_PROJECT_MULTIPLE,
                                   TEST_CLIENT_1, TEST_CLIENT_2, TEST_CLIENT_MULTIPLE)
-from dbcmailmerge.constants import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
+from dbcmailmerge.config import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
 
 
 class TestMailProject:

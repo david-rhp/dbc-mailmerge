@@ -4,7 +4,7 @@ from dbcmailmerge.mailproject import MailProject, Client
 from dbcmailmerge.utility import (path_creator, create_folder_hierarchy, prompt_filepath,
                                   mailmerge_factory, translate_dict)
 from tests.test_constants import TEST_DATA_SOURCE_PATH, TEST_PROJECT_SINGLE_1, TEST_CLIENT_1, TEST_CLIENT_2
-from dbcmailmerge.constants import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
+from dbcmailmerge.config import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
 
 
 def test_path_creator():

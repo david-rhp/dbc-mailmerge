@@ -1,11 +1,15 @@
 """
-Contains various helper functions.
+Contains various helper that are used by the Mailproject and Client class.
+
+Includes functions for creating file hierarchies, translation dictionary keys, and parsing excel files.
+
+
 """
+import pandas as pd
+import numpy as np
 from pathlib import Path
 from tkinter import filedialog, Tk
 from itertools import product
-import pandas as pd
-import numpy as np
 
 
 def prompt_filepath():
@@ -183,7 +187,6 @@ def translate_dict(in_dict, field_map, reverse=False):
     new_dict = in_dict.copy()
 
     # use keys or values to translate
-
     if reverse:
         # reverse field_map for translation purposes
         field_map = {value: key for key, value in field_map.items()}
