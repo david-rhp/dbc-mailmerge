@@ -1,5 +1,10 @@
 from pathlib import Path
-from mailmerge.utility import path_creator, create_folder_hierarchy, prompt_filepath
+
+from dbcmailmerge.mailproject import MailProject, Client
+from dbcmailmerge.utility import (path_creator, create_folder_hierarchy, prompt_filepath,
+                                  mailmerge_factory, translate_dict)
+from tests.test_constants import TEST_DATA_SOURCE_PATH, TEST_PROJECT_SINGLE_1, TEST_CLIENT_1, TEST_CLIENT_2
+from dbcmailmerge.config import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
 
 
 def test_path_creator():
@@ -36,3 +41,40 @@ def test_prompt_filepath(tmp_path, mocker):
     mocker.patch("tkinter.filedialog.askdirectory", lambda: tmp_path)
     result = prompt_filepath()
     assert result == expected
+
+
+def test_mailmerge_factory():
+    # Test with instantiation of 1 project
+    result = mailmerge_factory(MailProject, TEST_DATA_SOURCE_PATH, "project_data_single_1", FIELD_MAP_PROJECT)
+    expected = MailProject(**TEST_PROJECT_SINGLE_1)
+
+    assert result == expected
+
+    # Test with instantiation of 1 client
+    clients = mailmerge_factory(Client, TEST_DATA_SOURCE_PATH, "client_data", FIELD_MAP_CLIENTS)
+    result = clients[0]  # first client matches data in test_client_1
+    expected = Client(**TEST_CLIENT_1)
+
+    assert result == expected
+
+    # Test with instantiation of 2 clients
+    result = [clients[0], clients[-1]]
+    expected = [expected, Client(**TEST_CLIENT_2)]
+
+    assert result == expected
+
+
+def test_translate_dict():
+    test_dict = {"original_key_1": 1, "original_key_2": 2}
+    test_field_map = {"original_key_1": "original_value_1", "original_key_2": "original_value_2"}
+
+    # Test first translation (excel column names -> project level names)
+    result = translate_dict(test_dict, test_field_map)
+    expected = {"original_value_1": 1, "original_value_2": 2}
+
+    assert result == expected
+
+    # Test reverse translation (project level names -> excel column / word template placeholder names)
+    result = translate_dict(result, test_field_map, reverse=True)
+
+    assert result == test_dict  # original dict

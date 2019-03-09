@@ -1,8 +1,8 @@
-import pandas as pd  # used for testing the __repr__ of MailProject
-from mailmerge.mailproject import MailProject, Client
-from mailmerge.fieldmap import FIELD_MAP_PROJECT, FIELD_MAP_CLIENTS
-from tests.constants import TEST_PROJECT_SINGLE_1, TEST_PROJECT_SINGLE_2, TEST_PROJECT_MULTIPLE, \
-                            TEST_DATA_SOURCE_PATH, TEST_CLIENT_1, TEST_CLIENT_2, TEST_CLIENT_MULTIPLE
+from dbcmailmerge.mailproject import MailProject, Client
+from tests.test_constants import (HIERARCHY_ROOT, STANDARD_PDFS, TEST_DATA_SOURCE_PATH,
+                                  TEST_PROJECT_SINGLE_1, TEST_PROJECT_SINGLE_2, TEST_PROJECT_MULTIPLE,
+                                  TEST_CLIENT_1, TEST_CLIENT_2, TEST_CLIENT_MULTIPLE)
+from dbcmailmerge.config import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
 
 
 class TestMailProject:
@@ -36,12 +36,8 @@ class TestMailProject:
         project = MailProject(**TEST_PROJECT_SINGLE_1)
 
         expected = (f"Project ID ({TEST_PROJECT_SINGLE_1['project_id']}): {TEST_PROJECT_SINGLE_1['project_name']}, "
-                    f"issuance {TEST_PROJECT_SINGLE_1['date_issuance'].day}"
-                    f".{TEST_PROJECT_SINGLE_1['date_issuance'].month}"
-                    f".{TEST_PROJECT_SINGLE_1['date_issuance'].year}, "
-                    f"maturity {TEST_PROJECT_SINGLE_1['date_maturity'].day}"
-                    f".{TEST_PROJECT_SINGLE_1['date_maturity'].month}"
-                    f".{TEST_PROJECT_SINGLE_1['date_maturity'].year}")
+                    f"issuance {TEST_PROJECT_SINGLE_1['date_issuance']}, "
+                    f"maturity {TEST_PROJECT_SINGLE_1['date_maturity']}")
 
         assert str(project) == expected
 
@@ -93,6 +89,48 @@ class TestMailProject:
         result = [project.clients[0], project.clients[-1]]
 
         assert result == expected
+
+    def test_select_clients(self):
+        # set up project
+        project = MailProject(**TEST_PROJECT_SINGLE_1)
+        project.create_clients(TEST_DATA_SOURCE_PATH, "client_data", FIELD_MAP_CLIENTS)
+
+        # documents for clients that have an amount >= 0 will be contacted. This means that if there is a numeric
+        # value entered in the corresponding cell in Excel, the documents will be created. If not, parse excel
+        # reads the excel file, sets NaN for the missing value, and replaces NaN by an empty string.
+        # As a result, records with no entered amount, are converted to empty strings and are filtered out here.
+        selection_criteria = {"amount": lambda x: isinstance(x, (int, float))}
+        result = project.select_clients(selection_criteria)
+
+        # matches tests data source, id 3 excluded because no amount entered in excel
+        expected_client_ids = [1, 2, 4]
+
+        # Check if the correct amount of clients has been returned
+        assert len(result) == len(expected_client_ids)
+
+        # Check if the correct clients have been selected and returned
+        for client in result:
+            assert client.client_id in expected_client_ids
+
+    def test_create_client_documents_with_filter(self, with_filter=True):
+        # set up project
+        project = MailProject(**TEST_PROJECT_SINGLE_1)
+        project.create_clients(TEST_DATA_SOURCE_PATH, "client_data", FIELD_MAP_CLIENTS)
+
+        if with_filter:
+            selection_criteria = {"amount": lambda x: bool(x)}
+        else:
+            selection_criteria = {}
+
+        selected_clients = project.select_clients(selection_criteria)
+
+        project.create_client_documents(selected_clients, HIERARCHY_ROOT, STANDARD_PDFS)
+
+        pass
+
+    def test_create_client_documents_without_filter(self):
+        self.test_create_client_documents_with_filter(with_filter=False)
+        pass
 
 
 class TestClient():
