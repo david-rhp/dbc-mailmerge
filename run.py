@@ -13,9 +13,7 @@ import sys
 import tkinter as tk
 from tkinter import messagebox, filedialog
 from pathlib import Path
-from xlrd import XLRDError
-from dbcmailmerge.mailproject import MailProject
-from dbcmailmerge.config import FIELD_MAP_PROJECT, FIELD_MAP_CLIENTS
+from dbcmailmerge.utility import create_project_and_clients
 
 ABORT_KEYWORDS = ('q', "quit")
 # First element of the tuple is an explanation,the second a key to a filter
@@ -201,57 +199,6 @@ def prompt_files():
 
         if not ask_for_next_file:
             return selected_files
-
-
-def create_project_and_clients(data_source=None, data_kind=("project", "client"), project_object=None, counter=0):
-    """
-    Prompts the user to provide select an excel file, provide a sheet name, and creates an instance of a project
-    or calls the project's create_client method based on the data in that sheet.
-
-    This function is designed to run twice, first invoked by the caller, second invoked by itself. The first invocation
-    creates a MailProject instance, the second invocation calls its create_clients method,
-    thus, loading client instances into the project. For each call, a different excel sheet is processed.
-
-    Parameters
-    ----------
-    data_source : pathlib.Path or pathlike str or None, optional
-        Filepath to the data source, has to be `.xlsx` (default: None). If no data source is provided, the user
-        will be prompted to select one.
-    data_kind : tuple, optional
-        For which data categories the user should provide the excel sheet names for (default: project, client).
-    project_object : MailProject or None, optional
-        The project_object for which the client_records should be created. None is used when no project instance has
-        been instantiated.
-    counter : int, optional
-        Counts how often the function has called itself. If the function has invoked itself once (counter=1), it has
-        run 2 times in total (once by the original caller, once by itself) and can return to the original caller.
-
-    Returns
-    -------
-    project_object :
-        The created MailProject instance with instantiated client_records.
-    """
-    while True:
-        if not data_source:
-            data_source, data_sheet_name = prompt_data_source(data_kind[counter], prompt_source_file=True)
-        else:
-            _, data_sheet_name = prompt_data_source(data_kind[counter], prompt_source_file=False)
-
-        try:
-            if project_object:
-                project_object.create_client_records(data_source, data_sheet_name, FIELD_MAP_CLIENTS)
-            else:
-                project_object = MailProject.from_excel(data_source, data_sheet_name, FIELD_MAP_PROJECT)
-        except XLRDError:
-            print(f"Couldn't find the sheet name you specified for {data_kind[counter]} data, please try again.\n")
-        else:
-            break
-
-    if counter == 0:
-        counter += 1
-        project_object = create_project_and_clients(data_source, data_kind, project_object, counter)
-
-    return project_object
 
 
 if __name__ == "__main__":

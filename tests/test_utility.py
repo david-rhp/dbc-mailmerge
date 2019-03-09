@@ -1,6 +1,14 @@
+"""
+Author: David Meyer
+
+Description
+-----------
+Contains the test suite for the functions in utility.py.
+"""
 from pathlib import Path
 from dbcmailmerge.utility import (path_creator, create_folder_hierarchy, prompt_filepath,
-                                  translate_dict)
+                                  translate_dict, create_project_and_clients)
+# TODO refactor test cases, so that they are not duplicated.
 
 
 def test_path_creator():
