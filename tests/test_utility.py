@@ -1,7 +1,8 @@
 from pathlib import Path
 
 from dbcmailmerge.mailproject import MailProject, Client
-from dbcmailmerge.utility import path_creator, create_folder_hierarchy, prompt_filepath, mailmerge_factory
+from dbcmailmerge.utility import (path_creator, create_folder_hierarchy, prompt_filepath,
+                                  mailmerge_factory, translate_dict)
 from tests.test_constants import TEST_DATA_SOURCE_PATH, TEST_PROJECT_SINGLE_1, TEST_CLIENT_1, TEST_CLIENT_2
 from dbcmailmerge.constants import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
 
@@ -61,3 +62,19 @@ def test_mailmerge_factory():
     expected = [expected, Client(**TEST_CLIENT_2)]
 
     assert result == expected
+
+
+def test_translate_dict():
+    test_dict = {"original_key_1": 1, "original_key_2": 2}
+    test_field_map = {"original_key_1": "original_value_1", "original_key_2": "original_value_2"}
+
+    # Test first translation (excel column names -> project level names)
+    result = translate_dict(test_dict, test_field_map)
+    expected = {"original_value_1": 1, "original_value_2": 2}
+
+    assert result == expected
+
+    # Test reverse translation (project level names -> excel column / word template placeholder names)
+    result = translate_dict(result, test_field_map, reverse=True)
+
+    assert result == test_dict  # original dict

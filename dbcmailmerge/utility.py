@@ -152,6 +152,34 @@ def mailmerge_factory(cls, data_path, data_sheet_name, field_map):
 
 
 def translate_dict(in_dict, field_map, reverse=False):
+    """
+    Translates the keys of a dictionary to the values in field map.
+
+    Can be used to translate excel column names to the names used internally in the project. Additionally, if the
+    processing of the data has concluded, it can be used to `reverse` (kwarg) the translation, e.g., when the data
+    using the internal names is used to populate the word template placeholders (the placeholders in word match the
+    excel column names).
+
+    Parameters
+    ----------
+    in_dict : dict
+        Dictionary of which the keys should be translated to the values in field_map. It is not mutated.
+    field_map : dict
+        Dictionary of which contains the mapping of to be translated names (keys) to translated result (values).
+        Values need to be hashable or the reversal process won't work, as the key, value pairs in field_map are swapped,
+        i.e., values become keys of field_map.
+    reverse : bool, optional
+        Indicates if the field_map key: value pairs should be swapped (default: False). This would need to be done,
+        if the in_dict has already been translated once, and the translation should be reversed. Otherwise the current
+        implementation would throw an exception.
+
+    Returns
+    -------
+    new_dict : dict
+        A translated COPY of in_dict.
+
+    """
+    # TODO Automatically recognize when field_map needs to be recognized.
     new_dict = in_dict.copy()
 
     # use keys or values to translate
