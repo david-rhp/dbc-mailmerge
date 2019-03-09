@@ -185,7 +185,7 @@ def prompt_files():
     Returns
     -------
     selected_files : list
-        Contains the filepaths of the selected files.
+        Contains the file paths of the selected files.
     """
     messagebox.showinfo("Select Files", "Please select the standardized documents that you would like to include.")
 
@@ -214,7 +214,7 @@ def create_project_and_clients(data_source=None, data_kind=("project", "client")
 
     Parameters
     ----------
-    data_source : pathlib.Path or pathlike object or None, optional
+    data_source : pathlib.Path or pathlike str or None, optional
         Filepath to the data source, has to be `.xlsx` (default: None). If no data source is provided, the user
         will be prompted to select one.
     data_kind : tuple, optional

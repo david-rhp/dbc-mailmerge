@@ -285,6 +285,26 @@ class MailProject:
         return project_record
 
     def create_client_documents(self, selected_clients, hierarchy_root, standard_pdfs):
+        """
+        Creates the customized docs, includes the standard pdfs where appropriate and saves the merged file as 1 PDF.
+
+        The pdfs are saved in the folder structure required by the business need.
+
+        Parameters
+        ----------
+        selected_clients : list of dicts
+            A list containing the client_records (dicts) that evaluate to True for the function in selection_criteria.
+        hierarchy_root : pathlib.Path
+            The location in which the TOP_LEVEL_DIR should be created, which in turn will be used
+            to store all created documents. The files will be saved first by advisor, and within advisor by doc type
+            (see TEMPLATES.keys()).
+        standard_pdfs : list of pathlib.Path or pathlike str
+            File paths to the pdfs that should be included in the mail merge.
+
+        Returns
+        -------
+        None
+        """
         project_record = self.__create_project_record()
 
         advisors = set()
@@ -293,10 +313,12 @@ class MailProject:
             # add client advisor for creation of sub_directories
             advisors.add(client_record["advisor"])
 
+            # Apply formatting to client record
             client_record = self.__format_client_records(client_record)
 
             # translate client to match placeholders in word
             client_record = translate_dict(client_record, FIELD_MAP_CLIENTS, reverse=True)
+
             # add project data
             client_record.update(project_record)
 
@@ -310,19 +332,39 @@ class MailProject:
             self.__create_client_document(client_record, standard_pdfs, hierarchy_root)
 
     def __create_client_document(self, client_record, standard_pdfs, hierarchy_root):
-        # copy word template and replace placeholders with client instance data and project data
+        """
+
+        Parameters
+        ----------
+        client_record : dict
+            The dict represents a client record. A record contains information pertaining to a client,
+            e.g., the id, the address, the subscription amount etc.
+        standard_pdfs : list of pathlib.Path or pathlike str
+                File paths to the pdfs that should be included in the mail merge.
+        hierarchy_root : pathlib.Path
+            The location in which the TOP_LEVEL_DIR should be created, which in turn will be used
+            to store all created documents. The files will be saved first by advisor, and within advisor by doc type
+            (see TEMPLATES.keys()).
+
+        Returns
+        -------
+        None
+        """
         for doc_type in TEMPLATES.keys():
             created_documents_paths = []
             for template_path in TEMPLATES[doc_type]:
                 with MailMerge(template_path) as document:
+                    # copy word template and replace placeholders with client instance data and project data
                     document.merge(**client_record)
 
+                    # Create path to location where the file should be saved
                     out_path = (hierarchy_root
                                 / type(self).TOP_LEVEL_DIR
                                 / client_record[FIELD_MAP_CLIENTS_REVERSED["advisor"]]
                                 / doc_type)
 
-                    # template_name = template_path.split('/')[-1].replace(".docx", '')
+                    # Name used for saving the file in order to be able to distinguish documents that were
+                    # created based on different templates.
                     template_name = template_path.parts[-1].replace(".docx", '')
 
                     filename = ("Nr._"
@@ -336,18 +378,39 @@ class MailProject:
 
                     out_path_full = out_path / (filename + '_' + template_name + ".docx")
 
-                    # TODO Bottleneck here, file is written, read, converted, saved, deleted. Conversion takes long
-                    # save document in folder hierarchy
+                    # TODO Bottleneck here, file is written, read, converted, saved, deleted. Conversion takes long.
+
+                    # save document in folder hierarchy as docx
                     document.write(out_path_full)
+
+                    # convert docx to pdf
                     convert_to(out_path, out_path_full)
+
+                    # delete docx because it is not required for the final output
                     os.remove(out_path_full)
 
+                    # collect recently created pdf file path so that they can be removed later on when all pdfs
+                    # per client are merged
                     created_documents_paths.append(out_path_full.with_suffix('.pdf'))  # replace docx with pdf
 
             self.__merge_pdfs_and_remove(created_documents_paths, standard_pdfs, out_path, filename,
                                          INCLUDE_STANDARDS[doc_type])
 
     def __format_client_records(self, client_record):
+        """
+        Format the client record based on a pre-determined business need.
+
+        Parameters
+        ----------
+        client_record : dict
+            The to be formatted client record. It is not mutated.
+        Returns
+        -------
+        client_record : dict
+            The formatted client record.
+        """
+        client_record = client_record.copy()
+
         # Apply formatting rules
 
         # The MailMerge.merge method from docx-mailmerge strips the whitespace around each mergefield.
@@ -361,7 +424,7 @@ class MailProject:
             client_record["salutation"] += ' ' + client_record["title"]
             client_record["title"] = ''
 
-        client_record["address_mailing_street"] += '\n'
+        client_record["address_mailing_street"] += '\n'  # create space between street and zip city combination
 
         if client_record["amount"]:
             client_record["amount"] = format(client_record["amount"], ",.2f")
@@ -373,10 +436,31 @@ class MailProject:
         return client_record
 
     @staticmethod
-    def __merge_pdfs_and_remove(customized_documents, standard_pdfs, out_path, filename, include_standards=False):
+    def __merge_pdfs_and_remove(customized_documents_paths, standard_pdfs, out_path, filename, include_standards=False):
+        """
+        Merges the pdfs at the provided filepaths together into one file, and removes the unmerged versions.
+
+        Parameters
+        ----------
+        customized_documents_paths : list
+            Contains the filepaths to the recently created pdfs. Each element represents one pdf. All elements of the
+            list correspond to one specific client. The list is not mutated.
+        standard_pdfs : list of pathlib.Path or pathlike str
+                File paths to the pdfs that should be included in the mail merge.
+        out_path : pathlib.Path
+            Path to the folder where the merged pdfs should be saved.
+        filename : str
+            Name for the to be saved pdf file
+        include_standards : bool, optional
+            Indicates if the standard_pdfs should be included at the end of the customized and merged pdfs.
+            Refer to the docs in config.py for an example.
+        Returns
+        -------
+        None
+        """
         merger = PdfFileMerger()
 
-        all_documents = customized_documents.copy()
+        all_documents = customized_documents_paths.copy()
 
         if include_standards:
             all_documents.extend(standard_pdfs)
@@ -394,5 +478,5 @@ class MailProject:
             merger.close()  # closes all file descriptors (input and output)
 
         # delete old in_pdfs
-        for document in customized_documents:
+        for document in customized_documents_paths:
             os.remove(document)

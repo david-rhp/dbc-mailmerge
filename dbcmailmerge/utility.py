@@ -105,7 +105,7 @@ def parse_excel(filepath, sheet_name, field_list):
 
     Parameters
     ----------
-    filepath : pathlib.Path or pathlike object or None, optional
+    filepath : pathlib.Path or pathlike str or None, optional
             Filepath to the data source, has to be `.xlsx`.
     sheet_name : str
         Name of the excel source
