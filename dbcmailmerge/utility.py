@@ -107,22 +107,40 @@ def parse_excel(filepath, sheet_name, field_list):
 
 
 def mailmerge_factory(cls, data_path, data_sheet_name, field_map):
-    # TODO add docstring
-    # TODO add tests
+    """
+    Factory function to create 1 instance of cls per record of the data source.
+
+    This function takes an excel file, processes the records, and the selects only the relevnt columns, that are also
+    in the field_map. Since the names of the excel columns might change, but the program level attribute names will stay
+    the same, the map is also used to change the excel column names to the version used internally in the program.
+
+    Parameters
+    ----------
+    cls : class
+        Class for instantiating objects per record, either of type MailProject or Client.
+
+    data_path : pathlib.Path or pathlike str
+        Filepath to the data source, has to be `.xlsx`.
+    data_sheet_name : str
+        The sheet name, in which the records for the object instantiation are stored.
+    field_map : dict
+        A dictionary containing the mapping of excel_column_name to class_attribute_name (key: value). Class attribute
+        names are used consistently throughout the project, however, excel column names might change more often.
+        When a change occurs, only the field map has to be updated.
+
+    Returns
+    -------
+    instances : list of instances of cls or instance of cls
+        A list containing the created instances, if multiple records are in the data source, otherwise one instance.
+    """
     # obtain DataFrame with only the columns of field_maps.keys()
     data = parse_excel(data_path, data_sheet_name, field_map.keys())
 
-    # Extract one or more projects from the data source and instantiate one or more instances of cls
+    # Extract one or more records from the data source and instantiate one instance of cls per record
     instances = []
     for _, record in data.iterrows():
+        # Convert pandas series to dict for translation of excel column names to the version used internally
         record = record.to_dict()
-
-        # Use field map to translate excel column headers (keys) to expected values
-        # for key in record.copy():
-        #     if field_map[key] not in record:
-        #         record[field_map[key]] = record[key]
-        #         del record[key]
-
         record = translate_dict(record, field_map)
 
         instances.append(cls(**record))
@@ -146,6 +164,5 @@ def translate_dict(in_dict, field_map, reverse=False):
         if field_map[key] not in new_dict:
             new_dict[field_map[key]] = new_dict[key]
             del new_dict[key]
-
 
     return new_dict

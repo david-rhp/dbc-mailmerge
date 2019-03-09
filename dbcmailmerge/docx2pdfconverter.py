@@ -1,7 +1,14 @@
 """
-Credit to: Michal Zaleki
+Provides a wrapper to use the LibreOffice API, with which LibreOffice-compatible file types can be converted.
 
-from: https://michalzalecki.com/converting-docx-to-pdf-using-python/
+Code Author: Michal Zaleki
+
+References
+----------
+Source of this file
+    https://michalzalecki.com/converting-docx-to-pdf-using-python/
+How to use LibreOffice in a CLI
+    https://help.libreoffice.org/Common/Starting_the_Software_With_Parameters
 
 Thank you for providing this code.
 """

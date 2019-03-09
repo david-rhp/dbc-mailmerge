@@ -1,9 +1,17 @@
+"""
+Contains the main classes and business logic for creating a MailProject and corresponding Clients.
+
+In its current state, the business logic is tied into the classes and should be factored out in a future release
+to make the classes more maintainable and extendable.
+"""
+# TODO factor out business logic of classes
+
 import os
-from .utility import mailmerge_factory, translate_dict, create_folder_hierarchy
 from mailmerge import MailMerge
 from PyPDF2 import PdfFileMerger
-from dbcmailmerge.constants import (FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, FIELD_MAP_PROJECT, TEMPLATES,
-                                    INCLUDE_STANDARDS)
+from dbcmailmerge.constants import (FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, FIELD_MAP_PROJECT,
+                                    TEMPLATES, INCLUDE_STANDARDS)
+from .utility import mailmerge_factory, translate_dict, create_folder_hierarchy
 from .docx2pdfconverter import convert_to
 
 
