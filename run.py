@@ -189,7 +189,7 @@ def prompt_files():
         file = filedialog.askopenfile()
         root.update()
 
-        selected_files.append(file.name)  # .name = append filepath instead of io.TextWrapper
+        selected_files.append(file.name)  # .name = append filepath instead of _io.TextIOWrapper
 
         ask_for_next_file = messagebox.askyesno("Select File", "Do you want to select another file?")
         root.update()

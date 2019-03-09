@@ -46,9 +46,7 @@ FIELD_MAP_CLIENTS_REVERSED : dict
     should be determined, it used the advisor name, documents are aggregated per client. In order to get the
     advisor name of that specific client record, it's value for the advisor key has to accessed,
     but the key is in its original, untranslated format.
-
 """
-
 import os
 from pathlib import Path
 
