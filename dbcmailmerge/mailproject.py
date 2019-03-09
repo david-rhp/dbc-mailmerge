@@ -8,8 +8,6 @@ Contains the main classes and business logic for creating a MailProject and corr
 In its current state, the business logic is tied into the classes and should be factored out in a future release
 to make the classes more maintainable and extendable.
 """
-# TODO factor out business logic of classes
-
 import os
 from mailmerge import MailMerge
 from PyPDF2 import PdfFileMerger
@@ -20,6 +18,44 @@ from .docx2pdfconverter import convert_to
 
 
 class MailProject:
+    """
+    Models a mail project. For each mail project, a number of documents (customized and standardized) have to be
+    created for the company's clients. Not all clients receive documents per project.
+
+    An instance of this class should be created by using the factory method `MailProject.from_excel`.
+
+    This class can be used to create a mail project, load in the clients, filter the clients, and create the customized
+    and standardized documents.
+
+    Attributes
+    ----------
+    project_id : int
+        The id to distinctly identify a project.
+    project_name : str
+        The name of the project. Usually the issuing entity of a bond issue.
+    date_issuance : str
+        The date of the bond issuance. Stored as a string in the dd.mm.yyyy format, e.g., 31.12.2019 (format used in
+        Germany).
+    date_maturity : str
+        The maturity date of the bond. Stored as a string in the dd.mm.yyyy format, e.g., 31.12.2019 (format used in
+        Germany).
+    coupon_rate : float
+        Coupon rate of the bond. Has to be a decimal, i.e., 12% stored as 0.12. Impacts output format for creating
+        the coduments using the word templates.
+    commercial_register_number : str
+        The commercial register number used to distinctly identify companies in Germany (Handelsregisternummer).
+    issue_volume_min : int
+        Minimum issuance: Amount required for the bond to be issued. Can be any int in 5k increments >= 1 million.
+        Smaller values are not feasible from a business perspective.
+    issue_volume_max : int
+        Maximum issuance: Upper limit of the bond issuance. Can be any int in 5k increments >= issue_volume_min.
+    collateral_string : str
+        An enumeration of the collateral for the bond creditors.
+    client_records : list of dict, optional
+        A list of dictionaries. Each dictionary represents a client record. A record contains information pertaining
+        to a client, e.g., the id, the address, the subscription amount etc. (default: None).
+    """
+    # TODO factor out business logic of classes
     TOP_LEVEL_DIR = "client_correspondence"  # name of directory where the created documents should be stored
     AMOUNT_EMPTY_PLACEHOLDER = '_' * 20
 
@@ -65,9 +101,9 @@ class MailProject:
     @classmethod
     def from_excel(cls, project_data_path, project_data_sheet_name, project_field_map):
         """
-        Factory function to create 1 instance of cls per record of the data source.
+        Factory method to create 1 instance of cls per record of the data source.
 
-        This function takes an excel file, processes the records, and the selects only the relevnt columns, that are
+        This function takes an excel file, processes the records, and the selects only the relevant columns, that are
         also in the field_map. Since the names of the excel columns might change, but the program level attribute names
         will stay the same, the map is also used to change the excel column names to the version used internally
         in the program.
@@ -81,9 +117,9 @@ class MailProject:
         project_data_sheet_name : str
             The sheet name, in which the records for the object instantiation are stored.
         project_field_map : dict
-            A dictionary containing the mapping of excel_column_name to class_attribute_name (key: value).
+            A dictionary containing the mapping of excel_column_name to class_attribute_name.
             Class attribute names are used consistently throughout the project, however, excel column names might
-            change more often.nWhen a change occurs, only the field map has to be updated.
+            change more often. When a change occurs, only the field map in the config file has to be updated.
 
         Returns
         -------
@@ -108,6 +144,32 @@ class MailProject:
             return instances[0]
 
     def create_client_records(self, client_data_path, client_data_sheet_name, client_field_map):
+        """
+        Method to load records into the class instance's client_records attribute based on a provided excel file.
+
+        Reads an excel file and processes its rows. All processed records are stored as a list of dicts in the
+        instance's client_records attribute.
+
+        Parameters
+        ----------
+        client_data_path : pathlib.Path or pathlike str
+            Filepath to the data source, has to be `.xlsx`.
+        client_data_sheet_name : str
+            The sheet name, in which the records for the object instantiation are stored.
+        client_field_map : dict
+            A dictionary containing the mapping of excel_column_name to class_attribute_name.
+            Class attribute names are used consistently throughout the project, however, excel column names might
+            change more often. When a change occurs, only the field map in the config file has to be updated.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If the MailProject instance is not empty before calling this method.
+        """
         # obtain DataFrame with only the columns of field_maps.keys()
         df = parse_excel(client_data_path, client_data_sheet_name, client_field_map)
 
@@ -128,9 +190,31 @@ class MailProject:
         self.__cast_client_records(True)
 
     def __cast_client_records(self, silent=False):
+        """
+        Converts the instance attributes that are found in the CONVERSION MAP using the functions in the CONVERISON MAP.
+
+        Mutates the dictionaries stored in client_records.
+
+        Parameters
+        ----------
+        silent : bool, optional
+            Indicates if an error in the conversion process should be silenced (default: False).
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If an error occurs during the conversion process and silent=False
+            For example, a function in CONVERSION_MAP tried casting an incompatible value.
+        """
         for record in self.client_records:
             for key in CONVERSION_MAP:
                 conversion_function = CONVERSION_MAP[key]
+
+                # Try the conversion
                 try:
                     record[key] = conversion_function(record[key])
                 except ValueError as err:
@@ -141,10 +225,24 @@ class MailProject:
                                          "having an incompatible type with the conversion function in the "
                                          "CONVERSION MAP")
                     else:
-                        # don't change the value of the current record.
+                        # Value was not converted.
                         pass
 
     def select_clients(self, selection_criteria):
+        """
+        Selects client records from the instance attribute using a selection function.
+
+        Parameters
+        ----------
+        selection_criteria : dict of functions
+            The key represents the attribute on which the corresponding function should be applied.
+            The function (value of selection_criteria dict) needs to take a single input and return True, if the client
+            should be included, and False if the client should be excluded.
+        Returns
+        -------
+        selected_clients : list of dicts
+            A list containing the client_records (dicts) that evaluate to True for the function in selection_criteria.
+        """
         # select only relevant client_records
         selected_clients = []
         for client in self.client_records:
@@ -160,14 +258,29 @@ class MailProject:
         return selected_clients
 
     def __create_project_record(self):
-        # translate project data so that the fields (keys) match the names in the word template
+        """
+        Creates a project record that can be used for populating the placeholders in a word template.
+
+        This method also applies some formatting to the project data in the record, so that it has the intended
+        format for the MailMerge.
+
+        Returns
+        -------
+        project_record : dict
+            The formatted and translated project record. Translated means, that its keys have the matching names for
+            the placeholders in the word templates.
+        """
         project_record = vars(self)
         del project_record["client_records"]  # not part of the fields in the template
 
         # convert coupon rate from decimal to percentage and use German comma
         project_record["coupon_rate"] = format(float(project_record["coupon_rate"]) * 100, ".2f").replace('.', ',')
+
+        # translate project data so that the fields (keys) match the names in the word template
         project_record = translate_dict(project_record, FIELD_MAP_PROJECT, reverse=True)
-        project_record = {key: str(value) for key, value in project_record.items()}  # cast to str for MailMerge
+
+        # cast to str for MailMerge
+        project_record = {key: str(value) for key, value in project_record.items()}
 
         return project_record
 

@@ -158,7 +158,7 @@ def select_filter():
     """
     # TODO add multiple filters
     selection = None
-    filters = {"amount": lambda x: bool(x)}
+    filters = {"amount": lambda x: bool(x)}  # evaluates to False for cells that had no value in the data source
 
     selected_filters = {}
     while selection != 0 and not selected_filters:
