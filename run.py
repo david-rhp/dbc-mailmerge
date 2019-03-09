@@ -1,4 +1,8 @@
 """
+Author: David Meyer
+
+Description
+-----------
 Main file to run the application. Also contains helper functions used for creating the CLI.
 
 Prompts the user to select a directory where the documents should be saved, asks

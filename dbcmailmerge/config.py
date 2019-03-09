@@ -1,4 +1,8 @@
 """
+Author: David Meyer
+
+Description
+-----------
 Contains the constants for configuring the application.
 
 Constants

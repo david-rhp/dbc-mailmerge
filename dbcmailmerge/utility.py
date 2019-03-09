@@ -6,7 +6,6 @@ Description
 Contains various helper that are used by the Mailproject class.
 
 Includes functions for creating file hierarchies, translation dictionary keys, and parsing excel files.
-
 """
 import pandas as pd
 import numpy as np

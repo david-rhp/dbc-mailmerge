@@ -1,4 +1,8 @@
 """
+Author: David Meyer
+
+Description
+-----------
 Contains the main classes and business logic for creating a MailProject and corresponding clients.
 
 In its current state, the business logic is tied into the classes and should be factored out in a future release
