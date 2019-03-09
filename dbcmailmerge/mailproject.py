@@ -1,5 +1,5 @@
 """
-Contains the main classes and business logic for creating a MailProject and corresponding Clients.
+Contains the main classes and business logic for creating a MailProject and corresponding clients.
 
 In its current state, the business logic is tied into the classes and should be factored out in a future release
 to make the classes more maintainable and extendable.
@@ -10,14 +10,13 @@ import os
 from mailmerge import MailMerge
 from PyPDF2 import PdfFileMerger
 from dbcmailmerge.config import (FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, FIELD_MAP_PROJECT,
-                                 TEMPLATES, INCLUDE_STANDARDS)
-from .utility import mailmerge_factory, translate_dict, create_folder_hierarchy, parse_excel
+                                 TEMPLATES, INCLUDE_STANDARDS, CONVERSION_MAP)
+from .utility import translate_dict, create_folder_hierarchy, parse_excel
 from .docx2pdfconverter import convert_to
 
 
 class MailProject:
     TOP_LEVEL_DIR = "client_correspondence"  # name of directory where the created documents should be stored
-    DOCUMENT_TYPES = ["offer_documents", "appropriateness_test"]
     AMOUNT_EMPTY_PLACEHOLDER = '_' * 20
 
     def __init__(self, project_id, project_name, date_issuance, date_maturity, coupon_rate, commercial_register_number,
@@ -61,7 +60,48 @@ class MailProject:
 
     @classmethod
     def from_excel(cls, project_data_path, project_data_sheet_name, project_field_map):
-        return mailmerge_factory(cls, project_data_path, project_data_sheet_name, project_field_map)
+        """
+        Factory function to create 1 instance of cls per record of the data source.
+
+        This function takes an excel file, processes the records, and the selects only the relevnt columns, that are
+        also in the field_map. Since the names of the excel columns might change, but the program level attribute names
+        will stay the same, the map is also used to change the excel column names to the version used internally
+        in the program.
+
+        Parameters
+        ----------
+        cls : class
+            Class for instantiating objects per record.
+        project_data_path : pathlib.Path or pathlike str
+            Filepath to the data source, has to be `.xlsx`.
+        project_data_sheet_name : str
+            The sheet name, in which the records for the object instantiation are stored.
+        project_field_map : dict
+            A dictionary containing the mapping of excel_column_name to class_attribute_name (key: value).
+            Class attribute names are used consistently throughout the project, however, excel column names might
+            change more often.nWhen a change occurs, only the field map has to be updated.
+
+        Returns
+        -------
+        instances : list of instances of cls or instance of cls
+            A list containing the created instances, if multiple records are in the data source, otherwise one instance.
+        """
+        # obtain DataFrame with only the columns of field_maps.keys()
+        data = parse_excel(project_data_path, project_data_sheet_name, project_field_map.keys())
+
+        # Extract one or more records from the data source and instantiate one instance of cls per record
+        instances = []
+        for _, record in data.iterrows():
+            # Convert pandas series to dict for translation of excel column names to the version used internally
+            record = record.to_dict()
+            record = translate_dict(record, project_field_map)
+
+            instances.append(cls(**record))
+
+        if len(data) > 1:
+            return instances
+        else:
+            return instances[0]
 
     def create_client_records(self, client_data_path, client_data_sheet_name, client_field_map):
         # obtain DataFrame with only the columns of field_maps.keys()
@@ -81,12 +121,9 @@ class MailProject:
         else:
             self.client_records = client_records
 
-        self.cast_client_records(True)
+        self.__cast_client_records(True)
 
-    def cast_client_records(self, silent=False):
-        CONVERSION_MAP = {"amount": int, "depot_no": str, "depot_bic": str, "address_mailing_zip": str,
-                          "address_notify_zip": str}
-
+    def __cast_client_records(self, silent=False):
         for record in self.client_records:
             for key in CONVERSION_MAP:
                 conversion_function = CONVERSION_MAP[key]
@@ -118,7 +155,7 @@ class MailProject:
 
         return selected_clients
 
-    def create_project_record(self):
+    def __create_project_record(self):
         # translate project data so that the fields (keys) match the names in the word template
         project_record = vars(self)
         del project_record["client_records"]  # not part of the fields in the template
@@ -131,7 +168,7 @@ class MailProject:
         return project_record
 
     def create_client_documents(self, selected_clients, hierarchy_root, standard_pdfs):
-        project_record = self.create_project_record()
+        project_record = self.__create_project_record()
 
         advisors = set()
         merge_records = []
@@ -139,7 +176,7 @@ class MailProject:
             # add client advisor for creation of sub_directories
             advisors.add(client_record["advisor"])
 
-            client_record = self.format_client_records(client_record)
+            client_record = self.__format_client_records(client_record)
 
             # translate client to match placeholders in word
             client_record = translate_dict(client_record, FIELD_MAP_CLIENTS, reverse=True)
@@ -149,38 +186,13 @@ class MailProject:
             merge_records.append(client_record)
 
         # create folder hierarchy for the storage of the created documents
-        sub_directories = [list(advisors), type(self).DOCUMENT_TYPES]
+        sub_directories = [list(advisors), INCLUDE_STANDARDS.keys()]
         create_folder_hierarchy(hierarchy_root, type(self).TOP_LEVEL_DIR, sub_directories)
 
         for client_record in merge_records:
-            self.create_client_document(client_record, standard_pdfs, hierarchy_root)
+            self.__create_client_document(client_record, standard_pdfs, hierarchy_root)
 
-    def format_client_records(self, client_record):
-        # Apply formatting rules
-
-        # The MailMerge.merge method from docx-mailmerge strips the whitespace around each mergefield.
-        # In the cases where a client has a title, the format is, for example, <title><first_name> <last_name>
-        # This means that if there is no title, title should be replaced by an empty string, if there is, title
-        # should have a trailing space in order to prevent title being 'together' with first_name, such as
-        # Dr.Jane Doe => Dr. Jane Doe
-        # Therefore, format the first_name field and salutation field (where the same as above occurs).
-        if client_record["title"]:
-            client_record["first_name"] = client_record["title"] + ' ' + client_record["first_name"]
-            client_record["salutation"] += ' ' + client_record["title"]
-            client_record["title"] = ''
-
-        client_record["address_mailing_street"] += '\n'
-
-        if client_record["amount"]:
-            client_record["amount"] = format(client_record["amount"], ",.2f")
-        else:
-            # if no amount entered in excel, use _ als placeholder for the customer to enter in handwritten form
-            client_record["amount"] = type(self).AMOUNT_EMPTY_PLACEHOLDER
-
-        client_record = {key: str(value) for key, value in client_record.items()}  # cast to str for MailMerge
-        return client_record
-
-    def create_client_document(self, client_record, standard_pdfs, hierarchy_root):
+    def __create_client_document(self, client_record, standard_pdfs, hierarchy_root):
         # copy word template and replace placeholders with client instance data and project data
         for doc_type in TEMPLATES.keys():
             created_documents_paths = []
@@ -215,11 +227,36 @@ class MailProject:
 
                     created_documents_paths.append(out_path_full.with_suffix('.pdf'))  # replace docx with pdf
 
-            self.merge_pdfs_and_remove(created_documents_paths, standard_pdfs, out_path, filename,
-                                       INCLUDE_STANDARDS[doc_type])
+            self.__merge_pdfs_and_remove(created_documents_paths, standard_pdfs, out_path, filename,
+                                         INCLUDE_STANDARDS[doc_type])
+
+    def __format_client_records(self, client_record):
+        # Apply formatting rules
+
+        # The MailMerge.merge method from docx-mailmerge strips the whitespace around each mergefield.
+        # In the cases where a client has a title, the format is, for example, <title><first_name> <last_name>
+        # This means that if there is no title, title should be replaced by an empty string, if there is, title
+        # should have a trailing space in order to prevent title being 'together' with first_name, such as
+        # Dr.Jane Doe => Dr. Jane Doe
+        # Therefore, format the first_name field and salutation field (where the same as above occurs).
+        if client_record["title"]:
+            client_record["first_name"] = client_record["title"] + ' ' + client_record["first_name"]
+            client_record["salutation"] += ' ' + client_record["title"]
+            client_record["title"] = ''
+
+        client_record["address_mailing_street"] += '\n'
+
+        if client_record["amount"]:
+            client_record["amount"] = format(client_record["amount"], ",.2f")
+        else:
+            # if no amount entered in excel, use _ als placeholder for the customer to enter in handwritten form
+            client_record["amount"] = type(self).AMOUNT_EMPTY_PLACEHOLDER
+
+        client_record = {key: str(value) for key, value in client_record.items()}  # cast to str for MailMerge
+        return client_record
 
     @staticmethod
-    def merge_pdfs_and_remove(customized_documents, standard_pdfs, out_path, filename, include_standards=False):
+    def __merge_pdfs_and_remove(customized_documents, standard_pdfs, out_path, filename, include_standards=False):
         merger = PdfFileMerger()
 
         all_documents = customized_documents.copy()

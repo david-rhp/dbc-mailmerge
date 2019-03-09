@@ -1,10 +1,6 @@
 from pathlib import Path
-
-from dbcmailmerge.mailproject import MailProject
 from dbcmailmerge.utility import (path_creator, create_folder_hierarchy, prompt_filepath,
-                                  mailmerge_factory, translate_dict)
-from tests.test_constants import TEST_DATA_SOURCE_PATH, TEST_PROJECT_SINGLE_1, TEST_CLIENT_1, TEST_CLIENT_2
-from dbcmailmerge.config import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
+                                  translate_dict)
 
 
 def test_path_creator():
@@ -40,14 +36,6 @@ def test_prompt_filepath(tmp_path, mocker):
     # instead of obtaining the path through tkinter's user prompt, return tmp_path
     mocker.patch("tkinter.filedialog.askdirectory", lambda: tmp_path)
     result = prompt_filepath()
-    assert result == expected
-
-
-def test_mailmerge_factory():
-    # Test with instantiation of 1 project
-    result = mailmerge_factory(MailProject, TEST_DATA_SOURCE_PATH, "project_data_single_1", FIELD_MAP_PROJECT)
-    expected = MailProject(**TEST_PROJECT_SINGLE_1)
-
     assert result == expected
 
 
