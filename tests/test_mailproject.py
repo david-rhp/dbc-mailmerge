@@ -99,7 +99,7 @@ class TestMailProject:
         result = project.select_clients(selection_criteria)
 
         # matches tests data source, id 3 excluded because no amount entered in excel
-        expected_client_ids = ['1', '2', '4']
+        expected_client_ids = [1, 2, 4]
 
         # Check if the correct amount of client_records has been returned
         assert len(result) == len(expected_client_ids)

@@ -215,8 +215,8 @@ def create_project_and_clients(data_source, data_kind=("project", "client"), pro
         For which data categories the user should provide the excel sheet names for (default: project, client).
 
     project_object : MailProject or None, optional
-        The project_object for which the client_records should be created. None is used when no project instance has been
-        instantiated.
+        The project_object for which the client_records should be created. None is used when no project instance has
+        been instantiated.
 
     counter : int, optional
         Counts how often the function has called itself. If the function has invoked itself once (counter=1), it has

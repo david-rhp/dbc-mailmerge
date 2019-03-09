@@ -18,6 +18,7 @@ from .docx2pdfconverter import convert_to
 class MailProject:
     TOP_LEVEL_DIR = "client_correspondence"  # name of directory where the created documents should be stored
     DOCUMENT_TYPES = ["offer_documents", "appropriateness_test"]
+    AMOUNT_EMPTY_PLACEHOLDER = '_' * 20
 
     def __init__(self, project_id, project_name, date_issuance, date_maturity, coupon_rate, commercial_register_number,
                  issue_volume_min, issue_volume_max, collateral_string, client_records=None):
@@ -83,7 +84,7 @@ class MailProject:
         self.cast_client_records(True)
 
     def cast_client_records(self, silent=False):
-        CONVERSION_MAP = {"client_id": str, "amount": int, "depot_no": str, "depot_bic": str, "address_mailing_zip": str,
+        CONVERSION_MAP = {"amount": int, "depot_no": str, "depot_bic": str, "address_mailing_zip": str,
                           "address_notify_zip": str}
 
         for record in self.client_records:
@@ -138,6 +139,8 @@ class MailProject:
             # add client advisor for creation of sub_directories
             advisors.add(client_record["advisor"])
 
+            client_record = self.format_client_records(client_record)
+
             # translate client to match placeholders in word
             client_record = translate_dict(client_record, FIELD_MAP_CLIENTS, reverse=True)
             # add project data
@@ -151,6 +154,31 @@ class MailProject:
 
         for client_record in merge_records:
             self.create_client_document(client_record, standard_pdfs, hierarchy_root)
+
+    def format_client_records(self, client_record):
+        # Apply formatting rules
+
+        # The MailMerge.merge method from docx-mailmerge strips the whitespace around each mergefield.
+        # In the cases where a client has a title, the format is, for example, <title><first_name> <last_name>
+        # This means that if there is no title, title should be replaced by an empty string, if there is, title
+        # should have a trailing space in order to prevent title being 'together' with first_name, such as
+        # Dr.Jane Doe => Dr. Jane Doe
+        # Therefore, format the first_name field and salutation field (where the same as above occurs).
+        if client_record["title"]:
+            client_record["first_name"] = client_record["title"] + ' ' + client_record["first_name"]
+            client_record["salutation"] += ' ' + client_record["title"]
+            client_record["title"] = ''
+
+        client_record["address_mailing_street"] += '\n'
+
+        if client_record["amount"]:
+            client_record["amount"] = format(client_record["amount"], ",.2f")
+        else:
+            # if no amount entered in excel, use _ als placeholder for the customer to enter in handwritten form
+            client_record["amount"] = type(self).AMOUNT_EMPTY_PLACEHOLDER
+
+        client_record = {key: str(value) for key, value in client_record.items()}  # cast to str for MailMerge
+        return client_record
 
     def create_client_document(self, client_record, standard_pdfs, hierarchy_root):
         # copy word template and replace placeholders with client instance data and project data
