@@ -249,7 +249,9 @@ class MailProject:
             selected = True
 
             for criterion in selection_criteria.keys():
-                if not selection_criteria[criterion](client[criterion]):
+                # the filter is applied to this data point, and checks if it meets the criteria
+                data_point_to_check = client[criterion]
+                if not selection_criteria[criterion](data_point_to_check):
                     selected = False
 
             if selected:
