@@ -8,6 +8,7 @@ Contains the test suite for the functions in utility.py.
 from pathlib import Path
 from dbcmailmerge.utility import (path_creator, create_folder_hierarchy, prompt_filepath,
                                   translate_dict)
+
 # TODO refactor test cases, so that they are not duplicated.
 
 
