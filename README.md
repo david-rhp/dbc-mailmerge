@@ -18,6 +18,9 @@ Please install all the dependencies from the [requirements.txt](./requirements.t
 pip install -r requirements.txt
 ```
 
+## Usage
+To run this program, simply execute [run.py](run.py). The user will be prompted to select the appropriate files using tkinter message boxes, file dialogues, and the console.
+
 ## Testing
 
 ### General Instructions
@@ -26,7 +29,7 @@ The project uses pytest. Please note that the created documents are not automati
 
 New test runs will overwrite existing files, but only if the respective file is created again, i.e., the suite only creates new directories, if they do not exist yet, and overwrites old files with new files. It does not delete the directory in its entirety beforehand. For a clean result, delete the folder for each run. 
 
-**Side Note:** To test if the filter properly excludes particular clients when creating the documents, run the `test_create_client_documents_with_filter` and the `test_create_client_documents_without_filter` in [test_mailproject.py](./tests/test_mailproject.py) separately from one another, as they produce different results. If you run both at once, the client_correspondence will also have documents that wouldn't have been created by the test function using a filter. Futerhmore, both pass even if the output documents' contents are wrong (hence the requirement for the visual checking). They only fail if an exception is raised at runtime. **Do not assume proper output. Check the content of the created files manually.**
+**Side Note:** To test if the filter properly excludes particular clients when creating the documents, run the `test_create_client_documents_with_filter` and the `test_create_client_documents_without_filter` in [test_mailproject.py](./tests/test_mailproject.py) separately from one another, as they produce different results. If you run both at once, the client_correspondence will also have documents that wouldn't have been created by the test function using a filter. Furthermore, both pass even if the output documents' contents are wrong (hence the requirement for the visual checking). They only fail if an exception is raised at runtime. **Do not assume proper output. Check the content of the created files manually.**
 
 
 ### Data
@@ -48,12 +51,13 @@ Most options can be adjusted in [config.py](./dbcmailmerge/config.py). Please ha
 
 
 ### Formatting
-If you want to change the formatting of the data that should populate the placeholders in the word templates, please adjust the `MailProject.__format_client_records` method.
+If you want to change the formatting of the data that should populate the placeholders in the word templates, update the `MailProject.__format_client_records` method.
 
 If you want to change the filename of the output PDF make adjustments in the `MailProject.__create_client_document` method.
 
-If you want to change the formatting of the MailProject data, which is also used for populating word templates, please make adjustments to the `MailProject.__create_project_record` method.
+If you want to change the formatting of the MailProject data, which is also used for populating word templates, make adjustments to the `MailProject.__create_project_record` method.
 
+For making changes to the current UI, see [run.py](run.py).
 
 ## Known issues
 
