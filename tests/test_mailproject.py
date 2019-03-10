@@ -16,6 +16,12 @@ from dbcmailmerge.config import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
 
 class TestMailProject:
     def test_eq_operator(self):
+        """
+        Tests if testing for equality works as expected.
+
+        Many of the other tests are dependant on this method working. If this test fails along with others,
+        debug here first.
+        """
         # All other tests are dependent on the equality operation defined in the class
         project1 = MailProject(**TEST_PROJECT_SINGLE_1)
         project2 = MailProject(**TEST_PROJECT_SINGLE_1)
@@ -35,14 +41,6 @@ class TestMailProject:
         project1 = MailProject(**TEST_PROJECT_SINGLE_1)
         project2 = eval(repr(project1))
 
-        project1_attributes = vars(project1)
-        project2_attributes = vars(project2)
-
-        # Test if each attribute matches
-        for key in project1_attributes:
-            assert project1_attributes[key] == project2_attributes[key]
-
-        # Test using __eq__ of the class
         assert project1 == project2
 
     def test_str(self):
@@ -54,27 +52,21 @@ class TestMailProject:
 
         assert str(project) == expected
 
-    def test_direct_instantiation_project_1(self):
-        project = MailProject(**TEST_PROJECT_SINGLE_1)
-
-        # Test that all attributes have been set properly.
-        for key in TEST_PROJECT_SINGLE_1:
-            assert getattr(project, key) == TEST_PROJECT_SINGLE_1[key]
-
-    def test_direct_instantiation_project_2(self):
-        project = MailProject(**TEST_PROJECT_SINGLE_2)
-
-        # Test that all attributes have been set properly.
-        for key in TEST_PROJECT_SINGLE_2:
-            assert getattr(project, key) == TEST_PROJECT_SINGLE_2[key]
-
     def test_from_excel_single_project_1(self):
+        """
+        Tests if an instance created by the from_excel factory method is the same as one created by its constructor.
+        The test assumes that the data in TEST_PROJECT_SINGLE matches the one in the excel file.
+        """
         expected = MailProject(**TEST_PROJECT_SINGLE_1)
         result = MailProject.from_excel(TEST_DATA_SOURCE_PATH, "project_data_single_1", FIELD_MAP_PROJECT)
 
         assert result == expected
 
     def test_from_excel_single_project_2(self):
+        """
+        Tests if an instance created by the from_excel factory method is the same as one created by its constructor.
+        The test assumes that the data in TEST_PROJECT_SINGLE matches the one in the excel file.
+        """
         expected = MailProject(**TEST_PROJECT_SINGLE_2)
         result = MailProject.from_excel(TEST_DATA_SOURCE_PATH, "project_data_single_2", FIELD_MAP_PROJECT)
 

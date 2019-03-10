@@ -59,9 +59,9 @@ If you want to change the formatting of the MailProject data, which is also used
 
 The current way of converting the docx files to PDF in the `MailProject.__create_client_document` method is slow. However, this is not a critical issue for our business, because the to be processed client records never exceeds 150 clients (for legal reasons).
 
-In the future, possible solutions include using a different conversion method, such as using the [pywin32 module](https://pypi.org/project/pywin32/) to directly use the Windows API for the conversion process (caveat, Windows only). The conversion works, but the speed difference would have to be measured.
+In the future, possible solutions include using a different conversion method, such as using the [pywin32](https://pypi.org/project/pywin32/) to directly use the Windows API for the conversion process (caveat, Windows only). The conversion works, but the speed difference would have to be measured.
 
-Alternatively, the conversion process could be done a server, as described [here](https://michalzalecki.com/converting-docx-to-pdf-using-python/). 
+Alternatively, the conversion process could be done on a server, as described [here](https://michalzalecki.com/converting-docx-to-pdf-using-python/). 
 
 Another option might be using some form of concurrency.
 

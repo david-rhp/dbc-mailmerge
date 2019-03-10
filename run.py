@@ -276,5 +276,14 @@ if __name__ == "__main__":
     # Ask the user to select the standard pdfs that should be appended at the end of the created document per client.
     standard_pdfs = prompt_files()
 
-    # Create documents and save them at the desired location (hierarchy_root)
-    project.create_client_documents(selected_clients, hierarchy_root, standard_pdfs)
+    summary_msg = (f"You have selected the project {project.project_id}: {project.project_name}.\n"
+                   f"You are about to create documents for {len(selected_clients)} clients\n"
+                   f"Do you wish to continue?")
+
+    start_mailmerge = messagebox.askyesno("Start Mailmerge", summary_msg)
+
+    if start_mailmerge:
+        # Create documents and save them at the desired location (hierarchy_root)
+        project.create_client_documents(selected_clients, hierarchy_root, standard_pdfs)
+    else:
+        sys.exit(0)

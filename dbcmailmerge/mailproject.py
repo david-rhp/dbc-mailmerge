@@ -62,37 +62,50 @@ class MailProject:
     def __init__(self, project_id, project_name, date_issuance, date_maturity, coupon_rate, commercial_register_number,
                  issue_volume_min, issue_volume_max, collateral_string, client_records=None):
         # Core data
-        self.project_id = project_id
-        self.project_name = project_name
+        self.__project_id = project_id
+        self.__project_name = project_name
 
-        self.date_issuance = date_issuance
-        self.date_maturity = date_maturity
-        self.coupon_rate = coupon_rate
-        self.commercial_register_number = commercial_register_number
-        self.issue_volume_min = issue_volume_min
-        self.issue_volume_max = issue_volume_max
-        self.collateral_string = collateral_string
+        self.__date_issuance = date_issuance
+        self.__date_maturity = date_maturity
+        self.__coupon_rate = coupon_rate
+        self.__commercial_register_number = commercial_register_number
+        self.__issue_volume_min = issue_volume_min
+        self.__issue_volume_max = issue_volume_max
+        self.__collateral_string = collateral_string
 
         if client_records is None:
-            self.client_records = []
+            self.__client_records = []
+
+    # Read only properties. Data for the instance shouldn't be set from outside the class.
+    @property
+    def project_id(self):
+        return self.__project_id
+
+    @property
+    def project_name(self):
+        return self.__project_name
+
+    @property
+    def client_records(self):
+        return self.__client_records
 
     def __repr__(self):
         # Make sure that pd.Timestamp object gets created when using this string
         return (f"MailProject({self.project_id},"
                 f"'{self.project_name}',"
-                f"'{self.date_issuance}', "
-                f"'{self.date_maturity}', "
-                f"{self.coupon_rate}, "
-                f"'{self.commercial_register_number}', "
-                f"{self.issue_volume_min}, "
-                f"{self.issue_volume_max}, "
-                f"'{self.collateral_string}')")
+                f"'{self.__date_issuance}', "
+                f"'{self.__date_maturity}', "
+                f"{self.__coupon_rate}, "
+                f"'{self.__commercial_register_number}', "
+                f"{self.__issue_volume_min}, "
+                f"{self.__issue_volume_max}, "
+                f"'{self.__collateral_string}')")
 
     def __str__(self):
         return (f"Project ID ({self.project_id}): "
                 f"{self.project_name}, "
-                f"issuance {self.date_issuance}, "
-                f"maturity {self.date_maturity}")
+                f"issuance {self.__date_issuance}, "
+                f"maturity {self.__date_maturity}")
 
     def __eq__(self, other):
         # Assumption: two projects are the same if their attributes are the same.
@@ -181,11 +194,11 @@ class MailProject:
 
             client_records.append(record)
 
-        if self.client_records:
+        if self.__client_records:
             # prevent override of the client_records stored in the MailProject instance.
             raise ValueError("At least one client has already been added to this project.")
         else:
-            self.client_records = client_records
+            self.__client_records = client_records
 
         self.__cast_client_records(True)
 
@@ -210,7 +223,7 @@ class MailProject:
             If an error occurs during the conversion process and silent=False
             For example, a function in CONVERSION_MAP tried casting an incompatible value.
         """
-        for record in self.client_records:
+        for record in self.__client_records:
             for key in CONVERSION_MAP:
                 conversion_function = CONVERSION_MAP[key]
 
@@ -245,7 +258,7 @@ class MailProject:
         """
         # select only relevant client_records
         selected_clients = []
-        for client in self.client_records:
+        for client in self.__client_records:
             selected = True
 
             for criterion in selection_criteria.keys():
@@ -272,8 +285,19 @@ class MailProject:
             The formatted and translated project record. Translated means, that its keys have the matching names for
             the placeholders in the word templates.
         """
-        project_record = vars(self)
+        project_record = {}
+        for key, value in vars(self).items():
+            # Remove added class name for __attributes
+            stripped_key = key.replace("_MailProject__", '')
+
+            # remove leading underscore, if applicable
+            if stripped_key.startswith('_'):
+                stripped_key = stripped_key[1:]
+
+            project_record[stripped_key] = value
+
         del project_record["client_records"]  # not part of the fields in the template
+
 
         # convert coupon rate from decimal to percentage and use German comma
         project_record["coupon_rate"] = format(float(project_record["coupon_rate"]) * 100, ".2f").replace('.', ',')
