@@ -42,6 +42,8 @@ FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT : dict
     However, this does not include removing field_names. The current attributes are the minimally required information
     needed for each mailing project in general.
 
+    Adding new fields: If you want to add new fields, update the field_maps AND the attributes of the MailProject class.
+
 FIELD_MAP_CLIENTS_REVERSED : dict
     The reversal of FIELD_MAP_CLIENTS, created once, dynamically at runtime. This is used when the original names of
     the excel column names / word template placeholder names should be used.
