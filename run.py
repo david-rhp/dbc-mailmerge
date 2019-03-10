@@ -276,8 +276,10 @@ if __name__ == "__main__":
     # Ask the user to select the standard pdfs that should be appended at the end of the created document per client.
     standard_pdfs = prompt_files()
 
-    summary_msg = (f"You have selected the project {project.project_id}: {project.project_name}.\n"
-                   f"You are about to create documents for {len(selected_clients)} clients\n"
+    summary_msg = (f"You have selected the project:\n"
+                   f"{project.project_id}: {project.project_name}.\n\n"
+                   f"You are about to create documents for\n"
+                   f"{len(selected_clients)} clients\n\n"
                    f"Do you wish to continue?")
 
     start_mailmerge = messagebox.askyesno("Start Mailmerge", summary_msg)
