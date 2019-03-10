@@ -41,7 +41,7 @@ class MailProject:
         Germany).
     coupon_rate : float
         Coupon rate of the bond. Has to be a decimal, i.e., 12% stored as 0.12. Impacts output format for creating
-        the coduments using the word templates.
+        the documents using the word templates.
     commercial_register_number : str
         The commercial register number used to distinctly identify companies in Germany (Handelsregisternummer).
     issue_volume_min : int
