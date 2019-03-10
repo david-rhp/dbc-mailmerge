@@ -1,5 +1,5 @@
 """
-Author: Michal Zaleki
+Author: Michal Zalecki
 Thank you for publishing this code.
 
 Description
