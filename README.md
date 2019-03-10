@@ -18,7 +18,15 @@ pip install -r requirements.txt
 
 ## Testing
 
-The project uses pytest. Please note that the created documents are not automatically tested at the moment (the correct formatting, structure, etc.). This means the final output has to be verified visually at the moment. Please check the function's docstrings to verify if that's the case. 
+### General Instructions
+
+The project uses pytest. Please note that the created documents are not automatically tested at the moment (the correct formatting, structure, etc.). This means the final output has to be verified visually at the moment. Please check the function's docstrings to verify if that's the case. The documents are stored in [./data/tests/client_correspondence](./data/tests/client_correspondence). If `client_correspondence` is not available, please run the test suite. It will automatically create the directory structure and save the files that have been created and which need manual checking. 
+
+New test runs will overwrite existing files, but only if the respective file is created again, i.e., the suite only creates new directories, if they do not exist yet, and overwrites old files with new files. It does not delete the directory in its entirety beforehand. For a clean result, delete the folder for each run. 
+
+**Side Note:** To test if the filter properly excludes particular clients when creating the documents, run the `test_create_client_documents_with_filter` and the `test_create_client_documents_without_filter` in [test_mailproject.py](./tests/test_mailproject.py) separately from one another, as they produce different results. If you run both at once, the client_correspondence will also have documents that wouldn't have been created by the test function using a filter. Futerhmore, both pass even if the output documents' contents are wrong (hence the requirement for the visual checking). They only fail if an exception is raised at runtime. **Do not assume proper output. Check the content of the created files manually.**
+
+### Data
 
 Simple dummy data is found in [test_constants.py](./tests/test_constants.py). The tests also use dummy data from an excel sheet, see [test_data_source.xlsx](./data/tests/test_data_source.xlsx). A file similar to this would be used when using this project in production. Each row, represents data pertaining to a particular client. Do not change the sheet_names as they are statically stored in the test suite.
 
@@ -28,7 +36,7 @@ Please note, that it is assumed that the data of the excel file is clean, i.e., 
 
 ## Configuration
 
-This project is designed to fit a specific business need and has the appropriate business logic in the main class. However, it is not too difficult to adjust it for a different need.
+This project is designed to fit a specific business need and has the appropriate business logic in the main class. However, it is not too difficult to adjust it for a different need. Please update the test suite to match your adjustments.
 
 ### General adjustments
 Most options can be adjusted in [config.py](./dbcmailmerge/config.py). Please have a look at the module's docstring to see further explanations.
