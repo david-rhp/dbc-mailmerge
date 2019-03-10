@@ -278,7 +278,7 @@ if __name__ == "__main__":
 
     summary_msg = (f"You have selected the project:\n"
                    f"{project.project_id}: {project.project_name}.\n\n"
-                   f"You are about to create documents for\n"
+                   f"You are about to create documents for:\n"
                    f"{len(selected_clients)} clients\n\n"
                    f"Do you wish to continue?")
 
