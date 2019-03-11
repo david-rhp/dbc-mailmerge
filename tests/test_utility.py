@@ -1,10 +1,15 @@
-from pathlib import Path
+"""
+Author: David Meyer
 
-from dbcmailmerge.mailproject import MailProject, Client
+Description
+-----------
+Contains the test suite for the functions in utility.py.
+"""
+from pathlib import Path
 from dbcmailmerge.utility import (path_creator, create_folder_hierarchy, prompt_filepath,
-                                  mailmerge_factory, translate_dict)
-from tests.test_constants import TEST_DATA_SOURCE_PATH, TEST_PROJECT_SINGLE_1, TEST_CLIENT_1, TEST_CLIENT_2
-from dbcmailmerge.config import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
+                                  translate_dict)
+
+# TODO refactor test cases, so that they are not duplicated.
 
 
 def test_path_creator():
@@ -40,27 +45,6 @@ def test_prompt_filepath(tmp_path, mocker):
     # instead of obtaining the path through tkinter's user prompt, return tmp_path
     mocker.patch("tkinter.filedialog.askdirectory", lambda: tmp_path)
     result = prompt_filepath()
-    assert result == expected
-
-
-def test_mailmerge_factory():
-    # Test with instantiation of 1 project
-    result = mailmerge_factory(MailProject, TEST_DATA_SOURCE_PATH, "project_data_single_1", FIELD_MAP_PROJECT)
-    expected = MailProject(**TEST_PROJECT_SINGLE_1)
-
-    assert result == expected
-
-    # Test with instantiation of 1 client
-    clients = mailmerge_factory(Client, TEST_DATA_SOURCE_PATH, "client_data", FIELD_MAP_CLIENTS)
-    result = clients[0]  # first client matches data in test_client_1
-    expected = Client(**TEST_CLIENT_1)
-
-    assert result == expected
-
-    # Test with instantiation of 2 clients
-    result = [clients[0], clients[-1]]
-    expected = [expected, Client(**TEST_CLIENT_2)]
-
     assert result == expected
 
 

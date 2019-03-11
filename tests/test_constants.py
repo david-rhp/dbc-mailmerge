@@ -1,3 +1,11 @@
+"""
+Author: David Meyer
+
+Description
+-----------
+Contains the constants used in the test suite. Changes to project and client dummy data need to also be made in the
+test_data_source.xlsx file.
+"""
 from pathlib import Path
 
 

@@ -1,4 +1,8 @@
 """
+Author: David Meyer
+
+Description
+-----------
 Main file to run the application. Also contains helper functions used for creating the CLI.
 
 Prompts the user to select a directory where the documents should be saved, asks
@@ -10,8 +14,9 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 from pathlib import Path
 from xlrd import XLRDError
+
+from dbcmailmerge.config import FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT
 from dbcmailmerge.mailproject import MailProject
-from dbcmailmerge.config import FIELD_MAP_PROJECT, FIELD_MAP_CLIENTS
 
 ABORT_KEYWORDS = ('q', "quit")
 # First element of the tuple is an explanation,the second a key to a filter
@@ -76,7 +81,8 @@ def prompt_data_source(data_kind, prompt_source_file=True, prompt_sheet_name=Tru
     """
     data_source = None
     if prompt_source_file:
-        messagebox.showinfo("Select Data Source", "Select the data source for the project and the respective clients.")
+        messagebox.showinfo("Select Data Source",
+                            "Select the data source for the project and the respective client_records.")
         data_source = filedialog.askopenfilename()
         root.update()
 
@@ -153,7 +159,7 @@ def select_filter():
     """
     # TODO add multiple filters
     selection = None
-    filters = {"amount": lambda x: bool(x)}
+    filters = {"amount": lambda x: bool(x)}  # evaluates to False for cells that had no value in the data source
 
     selected_filters = {}
     while selection != 0 and not selected_filters:
@@ -180,7 +186,7 @@ def prompt_files():
     Returns
     -------
     selected_files : list
-        Contains the filepaths of the selected files.
+        Contains the file paths of the selected files.
     """
     messagebox.showinfo("Select Files", "Please select the standardized documents that you would like to include.")
 
@@ -198,10 +204,10 @@ def prompt_files():
             return selected_files
 
 
-def create_project_and_clients(data_source, data_kind=("project", "client"), project_object=None, counter=0):
+def create_project_and_clients(data_source=None, data_kind=("project", "client"), project_object=None, counter=0):
     """
-    Prompts the user to provide an excel sheet name and creates an instance of a project or calls the project's
-    create_client method based on the data in that sheet.
+    Prompts the user to provide select an excel file, provide a sheet name, and creates an instance of a project
+    or calls the project's create_client method based on the data in that sheet.
 
     This function is designed to run twice, first invoked by the caller, second invoked by itself. The first invocation
     creates a MailProject instance, the second invocation calls its create_clients method,
@@ -209,15 +215,14 @@ def create_project_and_clients(data_source, data_kind=("project", "client"), pro
 
     Parameters
     ----------
-    data_source : pathlib.Path or pathlike object
-        Filepath to the data source, has to be `.xlsx`.
+    data_source : pathlib.Path or pathlike str or None, optional
+        Filepath to the data source, has to be `.xlsx` (default: None). If no data source is provided, the user
+        will be prompted to select one.
     data_kind : tuple, optional
         For which data categories the user should provide the excel sheet names for (default: project, client).
-
     project_object : MailProject or None, optional
-        The project_object for which the clients should be created. None is used when no project instance has been
-        instantiated.
-
+        The project_object for which the client_records should be created. None is used when no project instance has
+        been instantiated.
     counter : int, optional
         Counts how often the function has called itself. If the function has invoked itself once (counter=1), it has
         run 2 times in total (once by the original caller, once by itself) and can return to the original caller.
@@ -225,13 +230,17 @@ def create_project_and_clients(data_source, data_kind=("project", "client"), pro
     Returns
     -------
     project_object :
-        The created MailProject instance with instantiated clients.
+        The created MailProject instance with instantiated client_records.
     """
     while True:
-        _, data_sheet_name = prompt_data_source(data_kind[counter], prompt_source_file=False)
+        if not data_source:
+            data_source, data_sheet_name = prompt_data_source(data_kind[counter], prompt_source_file=True)
+        else:
+            _, data_sheet_name = prompt_data_source(data_kind[counter], prompt_source_file=False)
+
         try:
             if project_object:
-                project_object.create_clients(data_source, data_sheet_name, FIELD_MAP_CLIENTS)
+                project_object.create_client_records(data_source, data_sheet_name, FIELD_MAP_CLIENTS)
             else:
                 project_object = MailProject.from_excel(data_source, data_sheet_name, FIELD_MAP_PROJECT)
         except XLRDError:
@@ -257,15 +266,26 @@ if __name__ == "__main__":
     hierarchy_root = Path(filedialog.askdirectory())
     root.update()
 
-    # Get data source, currently 1 excel sheet per project including both the client and the project data
-    data_source, _ = prompt_data_source("client", prompt_sheet_name=False)
+    # Prompt for data source, create project, and load clients
+    project = create_project_and_clients()
 
-    project = create_project_and_clients(data_source)
-
+    # Prompt the user to select a filter for selecting only records from the data source, that are relevant
     selection_criteria = select_filter()
     selected_clients = project.select_clients(selection_criteria)
 
+    # Ask the user to select the standard pdfs that should be appended at the end of the created document per client.
     standard_pdfs = prompt_files()
-    print(standard_pdfs)
-    # Create documents and merge
-    project.create_client_documents(selected_clients, hierarchy_root, standard_pdfs)
+
+    summary_msg = (f"You have selected the project:\n"
+                   f"{project.project_id}: {project.project_name}.\n\n"
+                   f"You are about to create documents for:\n"
+                   f"{len(selected_clients)} clients\n\n"
+                   f"Do you wish to continue?")
+
+    start_mailmerge = messagebox.askyesno("Start Mailmerge", summary_msg)
+
+    if start_mailmerge:
+        # Create documents and save them at the desired location (hierarchy_root)
+        project.create_client_documents(selected_clients, hierarchy_root, standard_pdfs)
+    else:
+        sys.exit(0)

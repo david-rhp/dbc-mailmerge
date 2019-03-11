@@ -1,11 +1,15 @@
 """
+Author: David Meyer
+
+Description
+-----------
 Contains the constants for configuring the application.
 
 Constants
 ---------
 TEMPLATES : dict
     Contains doc_type, [template_paths] pairs.
-    Add/remove templates that should be used for creating customized documents per clients. Currently, each template
+    Add/remove templates that should be used for creating customized documents per client_records. Currently, each template
     in TEMPLATES will be used for creating the documents. Each template needs to have a corresponding doc_type (key),
     which will be used to create folders for each doc_type. The documents created on the basis of a template,
     will be saved in their corresponding folder
@@ -25,6 +29,8 @@ INCLUDE_STANDARDS : dict
     is for internal use only, thus, it does not need standardized documents, such as general terms and conditions,
     since they are available for internal use anyways.
 
+CONVERSION_MAP : dict
+
 FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT : dict
     Contains the translation from excel column names to names that are used internally in this project. This is
     required because external files, such as the data source (excel column names) or the word templates (placeholders)
@@ -35,6 +41,8 @@ FIELD_MAP_CLIENTS, FIELD_MAP_PROJECT : dict
 
     However, this does not include removing field_names. The current attributes are the minimally required information
     needed for each mailing project in general.
+
+    Adding new fields: If you want to add new fields, update the field_maps AND the attributes of the MailProject class.
 
 FIELD_MAP_CLIENTS_REVERSED : dict
     The reversal of FIELD_MAP_CLIENTS, created once, dynamically at runtime. This is used when the original names of
@@ -68,6 +76,9 @@ INCLUDE_STANDARDS = {"offer_documents": True, "appropriateness_test": False}
 
 # Keys are the column headers in the data source, keys and data source have to match or a key error will be raised
 # values are the standardized way the respective data source is represented
+CONVERSION_MAP = {"amount": int, "depot_no": str, "depot_bic": str, "address_mailing_zip": str,
+                  "address_notify_zip": str}
+
 FIELD_MAP_CLIENTS = {"db_id": "client_id",
                      "betreuer": "advisor",
                      "titel": "title",

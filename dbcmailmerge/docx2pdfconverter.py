@@ -1,7 +1,10 @@
 """
-Provides a wrapper to use the LibreOffice API, with which LibreOffice-compatible file types can be converted.
+Author: Michal Zalecki
+Thank you for publishing this code.
 
-Code Author: Michal Zaleki
+Description
+-----------
+Provides a wrapper to use the LibreOffice API, with which LibreOffice-compatible file types can be converted.
 
 References
 ----------
@@ -9,8 +12,6 @@ Source of this file
     https://michalzalecki.com/converting-docx-to-pdf-using-python/
 How to use LibreOffice in a CLI
     https://help.libreoffice.org/Common/Starting_the_Software_With_Parameters
-
-Thank you for providing this code.
 """
 import sys
 import subprocess
@@ -30,7 +31,6 @@ def convert_to(folder, source, timeout=None):
 
 
 def libreoffice_exec():
-    # TODO: Provide support for more platforms
     if sys.platform == 'darwin':
         return '/Applications/LibreOffice.app/Contents/MacOS/soffice'
     return 'libreoffice'

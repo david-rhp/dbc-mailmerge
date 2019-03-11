@@ -1,9 +1,11 @@
 """
-Contains various helper that are used by the Mailproject and Client class.
+Author: David Meyer
+
+Description
+-----------
+Contains various helper that are used by the Mailproject class and the main program run.py.
 
 Includes functions for creating file hierarchies, translation dictionary keys, and parsing excel files.
-
-
 """
 import pandas as pd
 import numpy as np
@@ -18,7 +20,7 @@ def prompt_filepath():
 
     Returns
     -------
-    hierarchy_root: pathlib.Path
+    hierarchy_root : pathlib.Path
         Contains an absolute filepath.
     """
     # prevent second window pop up when prompting in askdirectory
@@ -37,11 +39,11 @@ def create_folder_hierarchy(hierarchy_root, top_level_dir, sub_directories):
 
     Parameters
     ----------
-    top_level_dir: str
+    top_level_dir : str
         Specifies the name of the top level directory, in which the `sub_directories` should be created. This needs
         to be a valid directory name for the respective OS.
 
-    sub_directories: list
+    sub_directories : list
         A 2d list, each row represents one directory level. Row 0 == top or `root` level directory.
         Row 1 would then be a list containing the sub directories for ALL directories in row 0.
         This means, each directory in row 0 has all the subdirectories of row 1. The elements of the lists need
@@ -51,6 +53,7 @@ def create_folder_hierarchy(hierarchy_root, top_level_dir, sub_directories):
     -------
     None
     """
+    # TODO reverse created folders if error encountered?
     # construct absolute paths
     paths = []
     for path in path_creator(sub_directories):
@@ -58,9 +61,6 @@ def create_folder_hierarchy(hierarchy_root, top_level_dir, sub_directories):
 
     for path in paths:
         path.mkdir(parents=True, exist_ok=True)
-
-    # TODO reverse created folders if error encountered?
-    # TODO return value?
 
 
 def path_creator(directories):
@@ -70,14 +70,14 @@ def path_creator(directories):
 
     Parameters
     ----------
-    directories: list
+    directories : list
         A 2d list, each row represents one directory level. Row 0 == top or `root` level directory.
         Row 1 would then be a list containing the subdirectories for ALL directories in row 0.
         This means, each directory in row 0 has all the subdirectories of row 1.
 
     Returns
     -------
-    paths: list
+    paths : list
         A list of individual pathlib.Path objects, each object representing one distinct path.
 
     Examples
@@ -96,7 +96,24 @@ def path_creator(directories):
 
 
 def parse_excel(filepath, sheet_name, field_list):
-    # TODO add docstring
+    """
+    Constructs a DataFrame from the provided excel sheet and returns the result.
+
+    Only the columns that are also in the field_list are in the DataFrame.
+
+    Parameters
+    ----------
+    filepath : pathlib.Path or pathlike str or None, optional
+            Filepath to the data source, has to be `.xlsx`.
+    sheet_name : str
+        Name of the excel source
+    field_list : list of str
+        Contains the names of the excel columns, that should be included in the DataFrame
+    Returns
+    -------
+    df : pandas.DataFrame
+        The df with the selected columns.
+    """
     # TODO add tests
     # Extract only relevant fields: all fields in field_list
     df = pd.read_excel(filepath, sheet_name)[field_list]
@@ -108,51 +125,6 @@ def parse_excel(filepath, sheet_name, field_list):
         df[column] = df_dates[column].dt.strftime("%d.%m.%Y")  # example: 31.12.2019
 
     return df
-
-
-def mailmerge_factory(cls, data_path, data_sheet_name, field_map):
-    """
-    Factory function to create 1 instance of cls per record of the data source.
-
-    This function takes an excel file, processes the records, and the selects only the relevnt columns, that are also
-    in the field_map. Since the names of the excel columns might change, but the program level attribute names will stay
-    the same, the map is also used to change the excel column names to the version used internally in the program.
-
-    Parameters
-    ----------
-    cls : class
-        Class for instantiating objects per record, either of type MailProject or Client.
-
-    data_path : pathlib.Path or pathlike str
-        Filepath to the data source, has to be `.xlsx`.
-    data_sheet_name : str
-        The sheet name, in which the records for the object instantiation are stored.
-    field_map : dict
-        A dictionary containing the mapping of excel_column_name to class_attribute_name (key: value). Class attribute
-        names are used consistently throughout the project, however, excel column names might change more often.
-        When a change occurs, only the field map has to be updated.
-
-    Returns
-    -------
-    instances : list of instances of cls or instance of cls
-        A list containing the created instances, if multiple records are in the data source, otherwise one instance.
-    """
-    # obtain DataFrame with only the columns of field_maps.keys()
-    data = parse_excel(data_path, data_sheet_name, field_map.keys())
-
-    # Extract one or more records from the data source and instantiate one instance of cls per record
-    instances = []
-    for _, record in data.iterrows():
-        # Convert pandas series to dict for translation of excel column names to the version used internally
-        record = record.to_dict()
-        record = translate_dict(record, field_map)
-
-        instances.append(cls(**record))
-
-    if len(data) > 1:
-        return instances
-    else:
-        return instances[0]
 
 
 def translate_dict(in_dict, field_map, reverse=False):
@@ -183,7 +155,7 @@ def translate_dict(in_dict, field_map, reverse=False):
         A translated COPY of in_dict.
 
     """
-    # TODO Automatically recognize when field_map needs to be recognized.
+    # TODO Automatically recognize when field_map needs to be reversed.
     new_dict = in_dict.copy()
 
     # use keys or values to translate
@@ -197,3 +169,5 @@ def translate_dict(in_dict, field_map, reverse=False):
             del new_dict[key]
 
     return new_dict
+
+
