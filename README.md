@@ -9,6 +9,17 @@ In its current iteration, this project requires LibreOffice to be installed on y
 
 [Download LibreOffice](https://www.libreoffice.org/download/download/)
 
+*Windows users*
+Ensure that the `LibreOffice\program` folder is in your PATH. The converter will look for `soffice` on Windows and requires the preceding path to be in the user's PATH.
+
+For example, the qualified path for LibreOffice is  something like this (by default): 
+
+```
+C:\Program Files\LibreOffice\program
+```
+
+which contains the `soffice` executable.
+
 
 ## Dependencies
 
