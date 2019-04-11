@@ -409,8 +409,8 @@ class MailProject:
                     # save document in folder hierarchy as docx
                     document.write(out_path_full)
 
-                    # convert docx to pdf
-                    convert_to(out_path, out_path_full)
+                    # convert docx to pdf -- implementation based on OS
+                    convert_to(str(out_path), str(out_path_full))
 
                     # delete docx because it is not required for the final output
                     os.remove(out_path_full)
@@ -491,17 +491,25 @@ class MailProject:
         if include_standards:
             all_documents.extend(standard_pdfs)
 
+        infiles = []
         for document in all_documents:
             # The reference to the file descriptor is reassigned in each loop, but a reference to each
             # descriptor is kept in the merger object. The descriptors are closed at the end when
-            # merger.close() is called
+            # merger.close() is called. This doesn't seem to work on Windows, so each infile is stored and closed
+            # after the files have been written to the outfiles. The merger instance requires the input file descriptor
+            # to be open when writing the output.
             # See: https://pythonhosted.org/PyPDF2/PdfFileMerger.html
             in_pdf = open(document, "rb")
             merger.append(in_pdf)
+            infiles.append(in_pdf)
 
         with open(out_path / (filename + ".pdf"), "wb") as out_pdf:
             merger.write(out_pdf)
-            merger.close()  # closes all file descriptors (input and output)
+            merger.close()  # closes all file descriptors (output)
+
+        # close all infile descriptors
+        for infile in infiles:
+            infile.close()
 
         # delete old in_pdfs
         for document in customized_documents_paths:
