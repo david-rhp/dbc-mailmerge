@@ -33,6 +33,8 @@ def convert_to(folder, source, timeout=None):
 def libreoffice_exec():
     if sys.platform == 'darwin':
         return '/Applications/LibreOffice.app/Contents/MacOS/soffice'
+    elif sys.platform == 'win32':
+        return 'soffice'
     return 'libreoffice'
 
 

@@ -15,7 +15,7 @@ from dbcmailmerge.config import (FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, 
                                  TEMPLATES, INCLUDE_STANDARDS, CONVERSION_MAP)
 from dbcmailmerge.utility import translate_dict, create_folder_hierarchy, parse_excel
 from dbcmailmerge.docx2pdfconverter import convert_to
-
+from dbcmailmerge.docx2pdfCOM import covx_to_pdf
 
 class MailProject:
     """
@@ -409,15 +409,15 @@ class MailProject:
                     # save document in folder hierarchy as docx
                     document.write(out_path_full)
 
-                    # convert docx to pdf
-                    convert_to(out_path, out_path_full)
+                # convert docx to pdf -- implementation based on OS
+                convert_to(str(out_path), str(out_path_full))
 
-                    # delete docx because it is not required for the final output
-                    os.remove(out_path_full)
+                # delete docx because it is not required for the final output
+                os.remove(out_path_full)
 
-                    # collect recently created pdf file path so that they can be removed later on when all pdfs
-                    # per client are merged
-                    created_documents_paths.append(out_path_full.with_suffix('.pdf'))  # replace docx with pdf
+                # collect recently created pdf file path so that they can be removed later on when all pdfs
+                # per client are merged
+                created_documents_paths.append(out_path_full.with_suffix('.pdf'))  # replace docx with pdf
 
             self.__merge_pdfs_and_remove(created_documents_paths, standard_pdfs, out_path, filename,
                                          INCLUDE_STANDARDS[doc_type])
@@ -498,6 +498,7 @@ class MailProject:
             # See: https://pythonhosted.org/PyPDF2/PdfFileMerger.html
             in_pdf = open(document, "rb")
             merger.append(in_pdf)
+            in_pdf.close()
 
         with open(out_path / (filename + ".pdf"), "wb") as out_pdf:
             merger.write(out_pdf)
