@@ -116,7 +116,7 @@ class TestMailProject:
         for client in result:
             assert client["client_id"] in expected_client_ids
 
-    def test_create_client_documents_with_filter_unix(self, with_filter=True):
+    def test_create_client_documents_with_filter(self, with_filter=True):
         """
         Tests if the function was able to create the documents. It does NOT check if the content has been created
         correctly. Please check the output manually (visually).
@@ -124,7 +124,7 @@ class TestMailProject:
         The test will always pass if no exception occurred and the files could be created.
 
         Run this function individually. Delete the client_correspondence folder manually in the ../tests/ directory
-        before each run. Running this test in conjunction with `test_create_client_documents_without_filter_unix` will
+        before each run. Running this test in conjunction with `test_create_client_documents_without_filter` will
         lead to inconsistent results.
         """
         # set up project
@@ -142,7 +142,7 @@ class TestMailProject:
 
         pass
 
-    def test_create_client_documents_without_filter_unix(self):
+    def test_create_client_documents_without_filter(self):
         """
         Tests if the function was able to create the documents. It does NOT check if the content has been created
         correctly. Please check the output manually (visually).
@@ -150,8 +150,8 @@ class TestMailProject:
         The test will always pass if no exception occurred and the files could be created.
 
         Run this function individually. Delete the client_correspondence folder manually in the ../tests/ directory
-        before each run. Running this test in conjunction with `test_create_client_documents_with_filter_unix` will
+        before each run. Running this test in conjunction with `test_create_client_documents_with_filter` will
         lead to inconsistent results.
         """
-        self.test_create_client_documents_with_filter_unix(with_filter=False)
+        self.test_create_client_documents_with_filter(with_filter=False)
         pass
