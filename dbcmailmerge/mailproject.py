@@ -15,7 +15,7 @@ from dbcmailmerge.config import (FIELD_MAP_CLIENTS, FIELD_MAP_CLIENTS_REVERSED, 
                                  TEMPLATES, INCLUDE_STANDARDS, CONVERSION_MAP)
 from dbcmailmerge.utility import translate_dict, create_folder_hierarchy, parse_excel
 from dbcmailmerge.docx2pdfconverter import convert_to
-from dbcmailmerge.docx2pdfCOM import covx_to_pdf
+
 
 class MailProject:
     """
